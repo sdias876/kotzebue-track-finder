@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kotzebue Track Finder</title>
+<meta name="theme-color" content="#1f4a3f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tracks">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: simple and friendly, for cold hands on a trail
+   IDEA: a trail marker: one question at a time, then the answer
+   PICTURE: big picture buttons that look like the marks in the snow
+   COLOUR and TYPE: snow white, deep spruce, blaze orange; Barlow Condensed + Barlow
+   LAYOUT: one screen per step, big targets, back and skip always in reach */
+:root{color-scheme:light dark;
+--bg:light-dark(#f2f5f4,#10171a);--ink:light-dark(#1a2326,#e7eeec);--soft:light-dark(#56656a,#9fb0b4);
+--card:light-dark(#ffffff,#1a2629);--line:light-dark(#d3dcda,#2c3b40);--chip:light-dark(#e8eeec,#213035);
+--deep:light-dark(#1f4a3f,#7fc2ac);--deepbg:light-dark(#1f4a3f,#173a32);--blaze:#e2561d;--blazeink:light-dark(#b8410f,#ff8a57);
+--mark:light-dark(#4f6b6f,#a9c4c8);--warn:light-dark(#fff1e9,#3a2116)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 Barlow,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:"Barlow Condensed",Barlow,sans-serif;line-height:1.05;margin:0;text-wrap:balance}
+header{background:var(--deepbg);color:#f2f5f4;padding:14px max(5vw,16px);display:flex;align-items:center;gap:12px}
+header h1{font-size:26px;flex:1}
+header button{min-height:44px;padding:8px 14px;border-radius:10px;border:0;background:#ffffff22;color:#fff;font:600 16px Barlow,sans-serif;cursor:pointer}
+main{max-width:560px;margin:0 auto;padding:18px max(4vw,14px) 40px}
+.screen h2{font-size:clamp(32px,9vw,42px);margin:6px 0 4px}
+.sub{color:var(--soft);margin:0 0 18px}
+.dots{display:flex;gap:6px;margin-bottom:8px}.dots i{flex:1;height:6px;border-radius:6px;background:var(--line)}.dots i.on{background:var(--blaze)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pick{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:150px;padding:14px 10px;border-radius:18px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:600 18px Barlow,sans-serif;text-align:center;cursor:pointer}
+.pick svg{width:74px;height:74px;color:var(--mark)}
+.pick:active{transform:scale(.97)}
+.pick.sel{border-color:var(--deep);background:var(--chip)}
+.pick small{font-weight:400;font-size:14px;color:var(--soft)}
+.bar{display:flex;gap:10px;margin-top:18px}
+.btn{flex:1;min-height:54px;padding:12px 18px;border-radius:14px;border:0;background:var(--blaze);color:#fff;font:600 18px Barlow,sans-serif;cursor:pointer}
+.btn.alt{background:var(--chip);color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--blaze);outline-offset:2px}
+.photo{position:relative;display:block;border-radius:18px;overflow:hidden;aspect-ratio:4/3;background:var(--chip);border:2px dashed var(--line);cursor:pointer;margin-bottom:14px}
+.photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.photo .in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--soft);font-weight:600}
+.photo .in svg{width:64px;height:64px;color:var(--mark)}
+.photo input{position:absolute;opacity:0;width:1px;height:1px}
+.photo:focus-within{outline:3px solid var(--blaze);outline-offset:3px}
+.big{background:var(--card);border:2px solid var(--deep);border-radius:20px;padding:20px;margin-top:6px}
+.big .lbl{color:var(--soft);font-weight:600;font-size:15px}
+.big h3{font-size:clamp(36px,10vw,48px);margin:2px 0}
+.big em{font-style:italic;color:var(--soft)}
+.conf{display:inline-block;margin:10px 0 6px;padding:4px 12px;border-radius:999px;background:var(--chip);font-weight:600;font-size:15px}
+.big p{margin:6px 0}
+.also{display:grid;gap:10px;margin-top:14px}
+.small{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.small div{flex:1}.small h3{font-size:24px}.small p{margin:0;font-size:14px;color:var(--soft)}
+.small button,.big .save{min-height:46px;padding:8px 14px;border-radius:12px;border:0;background:var(--deep);color:light-dark(#fff,#0f1a17);font:600 16px Barlow,sans-serif;cursor:pointer}
+.big .save{margin-top:10px;width:100%;min-height:52px;font-size:18px}
+.warn{background:var(--warn);border-left:5px solid var(--blaze);padding:12px 14px;border-radius:12px;margin:10px 0}
+.warn b{color:var(--blazeink)}
+input[type=text]{width:100%;font:17px Barlow,sans-serif;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:12px;min-height:50px;margin-top:14px}
+.msg{min-height:24px;color:var(--deep);font-weight:600;margin-top:8px}
+.log{display:grid;gap:10px;margin-top:12px}
+.entry{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px}
+.entry img,.entry .ph{width:64px;height:64px;border-radius:10px;object-fit:cover;background:var(--chip)}
+.entry h3{font-size:22px}.entry p{margin:0;font-size:14px;color:var(--soft)}
+.entry button{min-width:44px;min-height:44px;border:0;border-radius:10px;background:var(--chip);color:var(--ink);font-size:22px;cursor:pointer}
+textarea{width:100%;min-height:140px;font:15px Barlow,sans-serif;margin-top:10px;border-radius:12px;padding:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.note{font-size:14px;color:var(--soft);margin-top:24px}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:no-preference){.screen{animation:in .25s ease both}@keyframes in{from{opacity:0;transform:translateX(12px)}}}
+</style>
+</head>
+<body>
+<header><h1>Track Finder</h1><button type="button" id="goLog">My log <span id="cnt"></span></button></header>
+<main id="app"></main>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const Y=[2,2,2,2,2,2,2,2,2,2,2,2],SUM=[0,0,0,0,2,2,2,2,2,1,0,0];
+
+// little pictures (currentColor)
+const P=(d,vb='0 0 80 80')=>`<svg viewBox="${vb}" fill="currentColor" aria-hidden="true">${d}</svg>`;
+const paw=(x,y,s=1)=>`<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="0" cy="6" rx="7" ry="6"/><circle cx="-7" cy="-4" r="3"/><circle cx="-2.5" cy="-9" r="3"/><circle cx="2.5" cy="-9" r="3"/><circle cx="7" cy="-4" r="3"/></g>`;
+const dot=(x,y,r=5)=>`<circle cx="${x}" cy="${y}" r="${r}"/>`;
+const IC={
+ paw:P(paw(40,42,2.4)),
+ hoof:P('<path d="M38 14C26 16 22 34 24 50c1 10 8 16 14 14V14zM42 14c12 2 16 20 14 36-1 10-8 16-14 14V14z"/>'),
+ bird:P('<g stroke="currentColor" stroke-width="6" stroke-linecap="round" fill="none"><path d="M40 66V40M40 40L20 16M40 40V10M40 40L60 16M40 66v6"/></g>'),
+ t4:P(paw(40,42,2.4)),
+ t5:P('<g transform="translate(40 44) scale(2.3)"><ellipse cx="0" cy="6" rx="7.5" ry="6"/><circle cx="-9" cy="-1" r="2.6"/><circle cx="-5" cy="-7" r="2.6"/><circle cx="0" cy="-9" r="2.6"/><circle cx="5" cy="-7" r="2.6"/><circle cx="9" cy="-1" r="2.6"/></g>'),
+ thin:P('<g stroke="currentColor" stroke-width="5" stroke-linecap="round" fill="none"><path d="M40 50L18 18M40 50V10M40 50L62 18M40 50V72"/></g>'),
+ feather:P('<g stroke="currentColor" stroke-width="12" stroke-linecap="round" fill="none" opacity=".85"><path d="M40 52L22 22M40 52V16M40 52L58 22"/></g>'),
+ web:P('<path d="M40 64L14 22Q27 30 40 14Q53 30 66 22Z"/><path d="M40 64v10" stroke="currentColor" stroke-width="5"/>'),
+ zygo:P('<g stroke="currentColor" stroke-width="6" stroke-linecap="round" fill="none"><path d="M40 40L24 12M40 40L56 12M40 40L22 68M40 40L58 68"/></g>'),
+ line:P([10,24,38,52,66].map((y,i)=>dot(i%2?46:34,y+2)).join('')),
+ wander:P([[16,14],[34,22],[24,38],[48,40],[38,58],[62,62]].map(([x,y])=>dot(x,y)).join('')),
+ pairs:P([14,40,66].map(y=>dot(32,y)+dot(48,y)).join('')),
+ four:P([12,48].map(y=>dot(30,y+16,4)+dot(50,y+16,4)+dot(36,y+4,6)+dot(46,y+4,6)).join('')),
+ waddle:P([14,40,66].map((y,i)=>`<ellipse cx="${i%2?52:28}" cy="${y}" rx="9" ry="7"/>`).join('')+'<path d="M18 4v74M62 4v74" stroke="currentColor" stroke-width="2" opacity=".4"/>'),
+ slide:P('<rect x="30" y="8" width="20" height="50" rx="10" opacity=".55"/>'+dot(32,68,4)+dot(48,68,4)),
+ herd:P([[20,14],[40,22],[60,12],[28,40],[52,44],[18,64],[44,66],[64,60]].map(([x,y])=>`<path d="M${x-1} ${y-7}c-5 1-6 8-5 13 1 3 3 4 5 3zM${x+1} ${y-7}c5 1 6 8 5 13-1 3-3 4-5 3z"/>`).join('')),
+ walk:P([12,32,52].map((y,i)=>`<g transform="translate(${i%2?48:32} ${y+10})" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" fill="none"><path d="M0 6L-7-6M0 6V-8M0 6L7-6"/></g>`).join('')),
+ hop:P([18,50].map(y=>[30,50].map(x=>`<g transform="translate(${x} ${y+8})" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" fill="none"><path d="M0 6L-7-6M0 6V-8M0 6L7-6"/></g>`).join('')).join('')),
+ wings:P('<path d="M40 40C26 30 12 30 4 36c10 2 20 6 30 10zM40 40c14-10 28-10 36-4-10 2-20 6-30 10z" opacity=".7"/>'+dot(40,46,7)),
+ town:P('<path d="M8 70V40l16-14 16 14v30zM44 70V30l14-12 14 12v40z"/>'),
+ coast:P('<path d="M0 50c12-8 24 8 40 0s28 8 40 0v30H0z" opacity=".55"/><path d="M0 62c12-8 24 8 40 0s28 8 40 0v18H0z"/>'),
+ tundra:P('<path d="M0 60h80v20H0z"/><path d="M0 60c20-8 50-8 80 0" opacity=".4"/>'),
+ willow:P('<g stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"><path d="M24 74V30M24 46l-12-14M24 40l12-16M56 74V24M56 40l-14-14M56 50l12-14"/></g>'),
+ water:P('<ellipse cx="40" cy="52" rx="34" ry="16" opacity=".55"/><path d="M18 52h12M40 58h16" stroke="currentColor" stroke-width="3"/>'),
+ hills:P('<path d="M0 72L26 26l18 26 12-16 24 36z"/>'),
+ cam:P('<path d="M10 26h14l6-8h20l6 8h14v40H10z"/><circle cx="40" cy="45" r="12" fill="var(--chip)"/>'),
+ unsure:P('<text x="40" y="58" font-size="52" text-anchor="middle" font-family="Barlow,sans-serif" font-weight="700">?</text>')
+};
+
+// size choices in inches [lo,hi]
+const SIZES=[['xs',[0,1],'Smaller than a quarter'],['s',[1,2.5],'Quarter to two fingers wide'],['m',[2.5,4.5],'About my palm'],['l',[4.5,7],'About my whole hand'],['xl',[7,14],'Bigger than my hand']];
+const sizeIcon=r=>P(`<rect x="${40-r}" y="${40-r}" width="${2*r}" height="${2*r}" rx="${r*.45}" opacity=".85"/>`);
+
+const STEPS={
+ kind:{q:'What do the marks look like?',opts:[['paw','Paws with toes',IC.paw],['hoof','Hooves, 2 halves',IC.hoof],['bird','Bird feet',IC.bird]]},
+ toes:{q:'How many toes?',sub:'Count on the clearest print.',opts:[['4','4 toes',IC.t4],['5','5 toes',IC.t5]]},
+ foot:{q:'What shape are the toes?',opts:[['thin','Thin toes',IC.thin],['feather','Thick, fuzzy toes',IC.feather],['web','Webbed',IC.web],['zygo','2 forward, 2 back',IC.zygo]]},
+ size:{q:'How big is one print?',sub:'Hold your hand next to it.',opts:SIZES.map(([v,,l],i)=>[v,l,sizeIcon(8+i*6)])},
+ pat:{q:'How are the prints laid out?',sub:'Step back and look at the trail.',byKind:{
+   paw:[['line','In a straight line',IC.line],['wander','Wandering all over',IC.wander],['pairs','In pairs',IC.pairs],['four','Groups of 4',IC.four],['waddle','Wide, waddling',IC.waddle],['slide','Slides or tunnels',IC.slide]],
+   hoof:[['line','One line',IC.line],['herd','Many animals',IC.herd]],
+   bird:[['walk','Walking',IC.walk],['hop','Hopping',IC.hop],['wings','Wing marks',IC.wings]]}},
+ hab:{q:'Where are you?',opts:[['town','Town',IC.town],['coast','Beach or ice',IC.coast],['tundra','Open tundra',IC.tundra],['willow','Willows or river',IC.willow],['water','Pond or creek',IC.water],['hills','Hills',IC.hills]]}
+};
+const PATMAP={line:['line','lope'],wander:['wander'],pairs:['pairs'],four:['four'],waddle:['waddle','drag'],slide:['slide','tunnel'],herd:['herd'],walk:['walk'],hop:['hop'],wings:['wings']};
+const HABMAP={town:['town'],coast:['coast','ice'],tundra:['tundra'],willow:['willow'],water:['water'],hills:['hills']};
+
+const SP=[
+ {n:'Arctic fox',k:'paw',toes:[4],sz:[1.5,2.2],pat:['line','lope'],hab:['coast','ice','tundra','town'],mo:[2,2,2,2,1,1,1,1,1,2,2,2],inu:'tiġiganniaq',tip:'Very furry feet make blurry prints. Most often on the coast and sea ice.'},
+ {n:'Red fox',k:'paw',toes:[4],sz:[1.8,2.6],pat:['line','lope'],hab:['town','coast','tundra','willow','hills','ice'],mo:Y,inu:'kayuqtuq',tip:'Neat, straight dotted-line trail.'},
+ {n:'Dog',k:'paw',toes:[4],sz:[1.8,5],pat:['wander','line'],hab:['town','coast','ice','tundra','willow'],mo:Y,inu:'qimmiq',tip:'Wanders all over, usually near people or snowmachine trails.'},
+ {n:'Lynx',k:'paw',toes:[4],sz:[3.3,4.6],pat:['line'],hab:['willow','hills'],mo:Y,inu:'niutuiyiq',tip:'Big, round, soft prints with no claw marks.'},
+ {n:'Wolf',k:'paw',toes:[4],sz:[3.8,5.5],pat:['line','lope'],hab:['tundra','willow','ice','hills','coast'],mo:Y,inu:'amaġuq',tip:'Long, straight line with big even steps. Often follows caribou.',safe:1},
+ {n:'Ermine (weasel)',k:'paw',toes:[4,5],sz:[0.6,1.1],pat:['pairs','tunnel'],hab:['willow','town','tundra','coast'],mo:Y,inu:'tiġiaq',tip:'Tiny pairs. The trail dives into the snow and pops back out.'},
+ {n:'Mink',k:'paw',toes:[4,5],sz:[1.2,1.9],pat:['pairs','lope'],hab:['water','willow','coast'],mo:Y,inu:'',tip:'Like a bigger weasel trail, almost always near water.'},
+ {n:'River otter',k:'paw',toes:[5],sz:[2.4,3.6],pat:['lope','slide','pairs'],hab:['water','ice','willow'],mo:Y,inu:'',tip:'Belly slides between the prints. Near open water.'},
+ {n:'Wolverine',k:'paw',toes:[5],sz:[3.8,6],pat:['lope','line'],hab:['tundra','hills','willow'],mo:Y,inu:'qavvik',tip:'Wide 5-toed prints in slanted groups, going a long way straight.'},
+ {n:'Vole or lemming',k:'paw',toes:[4,5],sz:[0.2,0.6],pat:['tunnel','pairs','four'],hab:['tundra','willow','hills'],mo:Y,inu:'',tip:'Tiny tunnels and holes in the snow.'},
+ {n:'Muskrat',k:'paw',toes:[5],sz:[1.5,3],pat:['line','wander'],hab:['water'],mo:[1,1,1,1,2,2,2,2,2,2,1,1],inu:'kigvaluk',tip:'A thin tail line between the prints, at pond edges.'},
+ {n:'Snowshoe hare',k:'paw',toes:[4],sz:[3.5,6],pat:['four'],hab:['willow','hills','town'],mo:Y,inu:'ukalliq',tip:'Groups of 4, big back feet land in front. In willows.'},
+ {n:'Alaska hare',k:'paw',toes:[4],sz:[4.5,7.5],pat:['four'],hab:['tundra','coast','hills'],mo:Y,inu:'ukalliq',tip:'Like snowshoe hare but bigger, with long jumps on open tundra.'},
+ {n:'Porcupine',k:'paw',toes:[4,5],sz:[2.5,4.5],pat:['waddle'],hab:['willow','hills'],mo:Y,inu:'',tip:'Waddling trough with toes turned in. Rare near the coast.'},
+ {n:'Beaver',k:'paw',toes:[5],sz:[4.5,7],pat:['waddle','wander'],hab:['water','willow'],mo:[1,1,1,1,2,2,2,2,2,2,1,1],inu:'paluqtaq',tip:'Webbed back feet and chewed sticks nearby.'},
+ {n:'Brown bear',k:'paw',toes:[5],sz:[5,13],pat:['waddle','line'],hab:['tundra','willow','coast','hills','water','town'],mo:[0,0,0,1,2,2,2,2,2,2,1,0],inu:'aklaq',tip:'Huge 5-toed prints with long claws. Leave the area.',safe:1},
+ {n:'Caribou',k:'hoof',toes:[2],sz:[3.2,4.8],pat:['line','herd'],hab:['tundra','willow','coast','hills','ice'],mo:[2,2,2,2,1,1,1,1,2,2,2,2],inu:'tuttu',tip:'Round hooves that spread wide, often many together.'},
+ {n:'Muskox',k:'hoof',toes:[2],sz:[3.8,5.2],pat:['herd','line'],hab:['hills','coast','tundra'],mo:Y,inu:'umiŋmak',tip:'Rounder than caribou, in tight groups in the hills.'},
+ {n:'Moose',k:'hoof',toes:[2],sz:[4.8,7.5],pat:['line','drag'],hab:['willow','water','hills'],mo:Y,inu:'tuttuvak',tip:'Long, pointed, heart-shaped hooves, deep in the willows.',safe:1},
+ {n:'Redpoll',k:'bird',foot:'thin',sz:[0.6,1.2],pat:['hop'],hab:['willow','town'],mo:Y,inu:'',tip:'Tiny hopping tracks under willows.'},
+ {n:'Snow bunting',k:'bird',foot:'thin',sz:[0.8,1.3],pat:['walk'],hab:['coast','tundra','town'],mo:[1,1,2,2,2,2,2,2,2,2,1,1],inu:'',tip:'Small walking tracks on open snow and beaches.'},
+ {n:'Shorebird',k:'bird',foot:'thin',sz:[0.8,2],pat:['walk'],hab:['coast','water'],mo:SUM,inu:'',tip:'Thin toes zigzagging on mudflats in summer.'},
+ {n:'Rock ptarmigan',k:'bird',foot:'feather',sz:[1.6,2.1],pat:['walk','wings'],hab:['hills','tundra'],mo:Y,inu:'niksaaktuŋiq',tip:'Looks like willow ptarmigan, but up on rocky, open ground.'},
+ {n:'Willow ptarmigan',k:'bird',foot:'feather',sz:[1.9,2.6],pat:['walk','wings'],hab:['willow','tundra','town','water'],mo:Y,inu:'aqargiq',tip:'Fuzzy toes, in flocks around willows. Look for snow holes they slept in.'},
+ {n:'Duck',k:'bird',foot:'web',sz:[2,3],pat:['walk'],hab:['water','coast'],mo:SUM,inu:'',tip:'Webbed feet, ponds and lagoons in summer.'},
+ {n:'Gull',k:'bird',foot:'web',sz:[2.4,3.2],pat:['walk'],hab:['coast','town','water','ice'],mo:[0,0,0,1,2,2,2,2,2,2,0,0],inu:'',tip:'Webbed tracks on the beach and near the dump.'},
+ {n:'Snowy owl',k:'bird',foot:'zygo',sz:[3,4],pat:['wings'],hab:['tundra','coast','town','ice'],mo:[2,2,2,1,1,1,1,1,1,2,2,2],inu:'ukpik',tip:'Rarely walks. Look for a pounce mark with wing prints.'},
+ {n:'Raven',k:'bird',foot:'thin',sz:[3.2,4.2],pat:['walk','hop','wings'],hab:['town','coast','tundra','willow','hills','ice','water'],mo:Y,inu:'tuluġaq',tip:'Big, sharp bird tracks with a long back toe. Everywhere.'},
+ {n:'Goose',k:'bird',foot:'web',sz:[3.3,4.8],pat:['walk'],hab:['water','tundra','coast'],mo:SUM,inu:'',tip:'Big webbed tracks on wet tundra, summer.'},
+ {n:'Sandhill crane',k:'bird',foot:'thin',sz:[4,5.5],pat:['walk'],hab:['tundra','water'],mo:SUM,inu:'',tip:'Long thin toes and long steps, summer only.'}
+];
+
+let a={},flow=[],step=0,photoBlob=null,thumb='',res=[],sample=null;
+const app=$('#app');
+const pathFor=()=>['kind',...(a.kind==='paw'?['toes']:a.kind==='bird'?['foot']:[]),'size','pat','hab'];
+
+function home(){
+  app.innerHTML=`<section class="screen">
+    <h2>Found some tracks?</h2><p class="sub">Snap a photo (optional), then answer a few taps.</p>
+    <label class="photo">${thumb?`<img src="${photoURL}" alt="Your photo">`:`<span class="in">${IC.cam}Tap to take a photo</span>`}
+      <input type="file" id="photo" accept="image/*" capture="environment"></label>
+    <div class="bar"><button class="btn" type="button" id="start">Start</button></div>
+    <p class="note">Works without signal once it's on your home screen.</p></section>`;
+  $('#photo').addEventListener('change',onPhoto);
+  $('#start').addEventListener('click',()=>{a={};step=0;ask()});
+}
+function ask(){
+  flow=pathFor();const key=flow[step];const S=STEPS[key];
+  const opts=S.byKind?S.byKind[a.kind]:S.opts;
+  app.innerHTML=`<section class="screen">
+    <div class="dots">${flow.map((_,i)=>`<i class="${i<=step?'on':''}"></i>`).join('')}</div>
+    <h2>${S.q}</h2><p class="sub">${S.sub||'&nbsp;'}</p>
+    <div class="grid">${opts.map(([v,l,ic])=>`<button type="button" class="pick ${a[key]===v?'sel':''}" data-v="${v}">${ic}<span>${l}</span></button>`).join('')}
+      ${key!=='kind'?`<button type="button" class="pick" data-v="">${IC.unsure}<span>Not sure</span><small>Skip</small></button>`:''}</div>
+    <div class="bar"><button class="btn alt" type="button" id="back">Back</button></div></section>`;
+  app.querySelectorAll('.pick').forEach(b=>b.addEventListener('click',()=>{
+    a[key]=b.dataset.v||null;
+    if(key==='kind'){delete a.toes;delete a.foot;delete a.pat}
+    flow=pathFor();step++;step<flow.length?ask():results();
+  }));
+  $('#back').addEventListener('click',()=>{step?(step--,ask()):home()});
+  window.scrollTo(0,0);
+}
+function score(sp,m){
+  if(a.kind&&sp.k!==a.kind)return null;
+  let s=0;
+  if(a.toes){s+=sp.toes.includes(+a.toes)?3:-4}
+  if(a.foot){s+=sp.foot===a.foot?4:-5}
+  if(a.size){const [lo,hi]=SIZES.find(x=>x[0]===a.size)[1];
+    if(sp.sz[0]<=hi&&sp.sz[1]>=lo)s+=4;else{const d=sp.sz[1]<lo?(lo-sp.sz[1])/lo:(sp.sz[0]-hi)/hi;s+=d<0.3?0:-5}}
+  if(a.pat){s+=PATMAP[a.pat].some(p=>sp.pat.includes(p))?3:-2}
+  if(a.hab){s+=HABMAP[a.hab].some(h=>sp.hab.includes(h))?1.5:-0.5}
+  const v=sp.mo[m];s+=v===2?1:v===0?-4:0;
+  return {sp,s};
+}
+function results(){
+  const m=new Date().getMonth();
+  const all=SP.map(sp=>score(sp,m)).filter(Boolean).sort((x,y)=>y.s-x.s);
+  res=all.slice(0,3);const t=res[0].s,t2=res[1]?res[1].s:-9;
+  const conf=(r,i)=>i===0?(t>=9&&t-t2>=3?'Pretty sure':t>=5?'Good guess':'Rough guess'):(r.s>=t-2?'Also likely':'Possible');
+  res.forEach((r,i)=>r.c=conf(r,i));
+  const top=res[0];const safe=res.some(r=>r.sp.safe);
+  app.innerHTML=`<section class="screen">
+    ${safe?'<div class="warn"><b>Be careful:</b> this could be a bear, wolf or moose. If it looks fresh, don\'t follow it. Go back the way you came and keep kids and dogs close.</div>':''}
+    <div class="big"><div class="lbl">Most likely</div><h3>${esc(top.sp.n)}</h3>${top.sp.inu?`<em>${esc(top.sp.inu)}</em>`:''}
+      <div><span class="conf">${top.c}</span></div><p>${esc(top.sp.tip)}</p>
+      <button class="save" type="button" data-i="0">Save to my log</button></div>
+    <div class="also">${res.slice(1).map((r,i)=>`<div class="small"><div><h3>${esc(r.sp.n)}</h3><p>${r.c}. ${esc(r.sp.tip)}</p></div><button type="button" data-i="${i+1}">Save</button></div>`).join('')}</div>
+    <input type="text" id="loc" placeholder="Where? (optional) e.g. lagoon trail" aria-label="Location">
+    <div class="msg" id="msg" role="status"></div>
+    <div id="ai"></div>
+    <div class="bar"><button class="btn" type="button" id="again">New track</button><button class="btn alt" type="button" id="back">Change answers</button></div>
+  </section>`;
+  app.querySelectorAll('[data-i]').forEach(b=>b.addEventListener('click',()=>{const r=res[+b.dataset.i];save(r.sp.n,r.c)}));
+  $('#again').addEventListener('click',()=>{a={};photoBlob=null;thumb='';home()});
+  $('#back').addEventListener('click',()=>{step=flow.length-1;ask()});
+  aiBlock();window.scrollTo(0,0);
+}
+
+// photo
+let photoURL='';
+function shrink(img,max){const r=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*r);c.height=Math.round(img.naturalHeight*r);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c}
+function onPhoto(e){
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  photoURL=URL.createObjectURL(f);const img=new Image();
+  img.onload=()=>{try{shrink(img,1280).toBlob(b=>{photoBlob=b},'image/jpeg',.85);thumb=shrink(img,160).toDataURL('image/jpeg',.6)}catch(err){photoBlob=f;thumb='x'}home()};
+  img.src=photoURL;
+}
+
+// Claude second opinion, only with a photo and signal
+async function aiBlock(){
+  const box=$('#ai');if(!box||!sample||!photoBlob)return;
+  let ok=false;try{ok=!!(await sample.limits()).images}catch(e){}
+  if(!ok)return;
+  box.innerHTML='<div class="bar"><button class="btn alt" type="button" id="ask">Ask Claude to check my photo</button></div>';
+  $('#ask').addEventListener('click',async()=>{
+    box.innerHTML='<p class="sub">Claude is looking at your photo…</p>';
+    const said=Object.entries(a).filter(([,v])=>v).map(([k,v])=>`${k}: ${v}`).join(', ')||'nothing';
+    const prompt=`You are an expert wildlife tracker in Kotzebue, Alaska. Identify the track in the photo. The person answered: ${said} (size codes: xs under 1 in, s 1-2.5 in, m 2.5-4.5 in, l 4.5-7 in, xl over 7 in). Month: ${MON[new Date().getMonth()]}. Choose only from: ${SP.map(s=>s.n).join(', ')}. Reply with JSON only: {"name":"best match from the list","sure":"Pretty sure|Good guess|Rough guess","why":"one short, plain sentence","next":"one tip if unsure, else empty"}`;
+    try{
+      const r=await sample(prompt,{images:[photoBlob],modelTier:'default'});const t=r.text||'';
+      const j=JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1));
+      box.innerHTML=`<div class="small" style="margin-top:14px"><div><p>Claude says</p><h3>${esc(j.name)}</h3><p>${esc(j.sure)}. ${esc(j.why)} ${esc(j.next||'')}</p></div><button type="button" id="aiSave">Save</button></div>`;
+      $('#aiSave').addEventListener('click',()=>save(j.name,j.sure));
+    }catch(err){box.innerHTML=`<p class="sub">${err&&err.code==='rate_limited'?'Too many tries. Wait a minute.':'Couldn\'t reach Claude. Try again when you have signal.'}</p>`}
+  });
+}
+
+// log
+const KEY='ktf-log';
+const getLog=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
+const setLog=l=>{try{localStorage.setItem(KEY,JSON.stringify(l));return true}catch(e){return false}};
+const fmt=d=>{const x=new Date(d);return x.toLocaleDateString(undefined,{month:'short',day:'numeric'})+', '+x.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})};
+function count(){const n=getLog().length;$('#cnt').textContent=n?`(${n})`:''}
+function save(name,c){
+  const l=getLog();const loc=($('#loc')||{}).value||'';
+  l.unshift({d:new Date().toISOString(),sp:name,c,loc:loc.trim(),thumb:thumb&&thumb!=='x'?thumb:''});
+  if(!setLog(l.slice(0,300))){l[0].thumb='';setLog(l.slice(0,300))}
+  count();const m=$('#msg');if(m)m.textContent=`Saved ${name} to your log.`;
+}
+function showLog(){
+  const l=getLog();
+  app.innerHTML=`<section class="screen"><h2>My log</h2><p class="sub">Saved on this phone only.</p>
+    <div class="log">${l.length?l.map((e,i)=>`<div class="entry">${e.thumb?`<img src="${esc(e.thumb)}" alt="">`:'<div class="ph"></div>'}
+      <div><h3>${esc(e.sp)}</h3><p>${esc(fmt(e.d))}${e.loc?' · '+esc(e.loc):''}</p></div>
+      <button type="button" data-del="${i}" aria-label="Delete">×</button></div>`).join(''):'<p class="sub">Nothing saved yet.</p>'}</div>
+    <div class="bar">${l.length?'<button class="btn alt" type="button" id="copy">Copy my log</button>':''}<button class="btn" type="button" id="home">Find a track</button></div>
+    <textarea id="ta" hidden aria-label="Log text"></textarea></section>`;
+  app.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{const x=getLog();x.splice(+b.dataset.del,1);setLog(x);count();showLog()}));
+  $('#home').addEventListener('click',home);
+  const cp=$('#copy');if(cp)cp.addEventListener('click',async()=>{
+    const txt=l.map(e=>`${fmt(e.d)} | ${e.loc||'-'} | ${e.sp} | ${e.c}`).join('\n');
+    try{await navigator.clipboard.writeText(txt);cp.textContent='Copied!'}catch(err){const ta=$('#ta');ta.hidden=false;ta.value=txt;ta.select();cp.textContent='Copy the text below'}
+  });
+  window.scrollTo(0,0);
+}
+$('#goLog').addEventListener('click',showLog);
+
+count();home();
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+}
+</script>
+</body>
+</html>
