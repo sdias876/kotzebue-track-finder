@@ -5,7 +5,7 @@
 // Environment variables (set in the Render dashboard):
 //   GEMINI_API_KEY     Google Gemini key (free plan, from aistudio.google.com). Used first if set.
 //   ANTHROPIC_API_KEY  Anthropic key (paid). Used if no Gemini key is set.
-//   GEMINI_MODEL       optional. Defaults to gemini-2.5-flash.
+//   GEMINI_MODEL       optional. Defaults to gemini-flash-latest (Google's newest fast model).
 //   APP_CODE           required. Access code the app must send, so strangers can't use your key.
 //   ALLOWED_ORIGIN     optional. Defaults to the app's address.
 //   MODEL              optional. Defaults to claude-sonnet-5-5.
@@ -15,7 +15,7 @@ const http = require('http');
 const PORT = process.env.PORT || 10000;
 const KEY = process.env.ANTHROPIC_API_KEY || '';
 const GKEY = process.env.GEMINI_API_KEY || '';
-const GMODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const GMODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 const CODE = process.env.APP_CODE || '';
 const ORIGIN = process.env.ALLOWED_ORIGIN || 'https://kotzebue-track-finder-5frq.onrender.com';
 const MODEL = process.env.MODEL || 'claude-sonnet-5-5';
@@ -71,7 +71,7 @@ async function askGemini(image, prompt) {
     headers: { 'x-goog-api-key': GKEY, 'content-type': 'application/json' },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ inline_data: { mime_type: 'image/jpeg', data: image } }, { text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 2048, temperature: 0.2, thinkingConfig: { thinkingBudget: 0 } }
+      generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 4096, temperature: 0.2 }
     })
   });
   if (!r.ok) { console.error('Gemini error', r.status, (await r.text()).slice(0, 300)); throw new Error('upstream'); }
