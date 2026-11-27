@@ -3,7 +3,9 @@
 // No dependencies: needs Node 18+ (built-in fetch).
 //
 // Environment variables (set in the Render dashboard):
-//   ANTHROPIC_API_KEY  required. Your Anthropic API key.
+//   GEMINI_API_KEY     Google Gemini key (free plan, from aistudio.google.com). Used first if set.
+//   ANTHROPIC_API_KEY  Anthropic key (paid). Used if no Gemini key is set.
+//   GEMINI_MODEL       optional. Defaults to gemini-2.5-flash.
 //   APP_CODE           required. Access code the app must send, so strangers can't use your key.
 //   ALLOWED_ORIGIN     optional. Defaults to the app's address.
 //   MODEL              optional. Defaults to claude-sonnet-5-5.
@@ -12,6 +14,8 @@ const http = require('http');
 
 const PORT = process.env.PORT || 10000;
 const KEY = process.env.ANTHROPIC_API_KEY || '';
+const GKEY = process.env.GEMINI_API_KEY || '';
+const GMODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const CODE = process.env.APP_CODE || '';
 const ORIGIN = process.env.ALLOWED_ORIGIN || 'https://kotzebue-track-finder-5frq.onrender.com';
 const MODEL = process.env.MODEL || 'claude-sonnet-5-5';
@@ -54,6 +58,28 @@ For "inupiaq", give the Iñupiaq name only if you are confident of it; otherwise
 Reply with JSON only, no other text:
 {"name":"common name","sure":"Pretty sure|Good guess|Rough guess","why":"what in the photo points to it, one sentence","also":"second most likely, or empty","inupiaq":"","about":"two sentences on what the animal is like","doing":"what it was probably doing, from the track, one sentence","age":"how old the track looks and why, one sentence","local":"where and when it is found around Kotzebue, one sentence","safety":"one sentence if there is any safety concern (bear, moose, wolf, thin ice, a fresh kill), else empty","fact":"one interesting fact","next":"one tip to get a surer answer, or empty"}`;
 
+  const text = GKEY ? await askGemini(body.image, prompt) : await askClaude(body.image, prompt);
+  const j = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
+  const out = {};
+  for (const k of ['name','sure','why','also','inupiaq','about','doing','age','local','safety','fact','next']) out[k] = clean(j[k], 400);
+  return out;
+}
+
+async function askGemini(image, prompt) {
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GMODEL}:generateContent`, {
+    method: 'POST',
+    headers: { 'x-goog-api-key': GKEY, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ inline_data: { mime_type: 'image/jpeg', data: image } }, { text: prompt }] }],
+      generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 2048, temperature: 0.2, thinkingConfig: { thinkingBudget: 0 } }
+    })
+  });
+  if (!r.ok) { console.error('Gemini error', r.status, (await r.text()).slice(0, 300)); throw new Error('upstream'); }
+  const data = await r.json();
+  return ((data.candidates || [])[0]?.content?.parts || []).map(p => p.text || '').join('');
+}
+
+async function askClaude(image, prompt) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
@@ -61,24 +87,20 @@ Reply with JSON only, no other text:
       model: MODEL,
       max_tokens: 900,
       messages: [{ role: 'user', content: [
-        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: body.image } },
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: image } },
         { type: 'text', text: prompt }
       ] }]
     })
   });
   if (!r.ok) { console.error('Anthropic error', r.status, (await r.text()).slice(0, 300)); throw new Error('upstream'); }
   const data = await r.json();
-  const text = (data.content || []).map(c => c.text || '').join('');
-  const j = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
-  const out = {};
-  for (const k of ['name','sure','why','also','inupiaq','about','doing','age','local','safety','fact','next']) out[k] = clean(j[k], 400);
-  return out;
+  return (data.content || []).map(c => c.text || '').join('');
 }
 
 http.createServer((req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, {});
   if (req.method === 'GET' && (req.url === '/' || req.url === '/health')) {
-    return send(res, 200, { ok: true, ready: !!(KEY && CODE) });
+    return send(res, 200, { ok: true, ready: !!((GKEY || KEY) && CODE), using: GKEY ? 'gemini' : KEY ? 'claude' : 'none' });
   }
   if (req.method !== 'POST' || req.url !== '/api/identify') return send(res, 404, { error: 'not_found' });
 
@@ -92,7 +114,7 @@ http.createServer((req, res) => {
     if (res.writableEnded) return;
     let body;
     try { body = JSON.parse(Buffer.concat(chunks).toString()); } catch { return send(res, 400, { error: 'bad_request' }); }
-    if (!KEY || !CODE) return send(res, 503, { error: 'not_set_up' });
+    if (!(GKEY || KEY) || !CODE) return send(res, 503, { error: 'not_set_up' });
     if (String(body.code || '').trim().toLowerCase() !== CODE.trim().toLowerCase()) return send(res, 401, { error: 'wrong_code' });
     if (typeof body.image !== 'string' || body.image.length < 100 || !/^[A-Za-z0-9+/=]+$/.test(body.image)) return send(res, 400, { error: 'no_photo' });
     if (limited(ip)) return send(res, 429, { error: 'too_many' });

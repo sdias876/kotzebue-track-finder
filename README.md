@@ -11,4 +11,4 @@ Add it to your phone's home screen and it works offline.
 
 ## Photo server (`api/`)
 Runs on Render as a Node web service (root directory `api`, start command `node server.js`).
-Environment variables: `ANTHROPIC_API_KEY` (required), `APP_CODE` (required, the access code the app asks for), `MODEL` (optional).
+Environment variables: `GEMINI_API_KEY` (free, from aistudio.google.com) or `ANTHROPIC_API_KEY`, `APP_CODE` (required, the access code the app asks for), `MODEL` (optional).
