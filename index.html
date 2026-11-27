@@ -137,8 +137,20 @@ input[type=range]{width:100%;height:44px;accent-color:var(--blaze)}
 .opt.right{border-color:var(--ok);background:light-dark(#e7f6ee,#16301f)}.opt.wrong{border-color:var(--blaze);background:var(--warn)}
 .opt:disabled{cursor:default;color:var(--ink)}
 .fbk{margin-top:14px;padding:14px 16px;border-left:5px solid var(--blaze)}.fbk.ok{border-left-color:var(--ok)}.fbk p{margin:4px 0 0}
+.mapbox{height:62vh;min-height:320px;overflow:hidden;padding:0}
+.popb{margin-top:6px;min-height:34px;padding:4px 12px;border:0;border-radius:8px;background:#1d4a3e;color:#fff;font:600 13px Inter,sans-serif;cursor:pointer}
+.leaflet-popup-content{font:14px/1.4 Inter,sans-serif}
+.gal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+.gal button{padding:0;border:0;background:none;cursor:pointer;text-align:left;color:var(--soft);font:12px Inter,sans-serif}
+.gal img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;display:block;margin-bottom:3px}
+.chips.big button{min-height:44px;padding:8px 14px;font-size:15px}.chips button.on{background:var(--deep);color:light-dark(#fff,#0f1a17);border-color:var(--deep)}
+.agecard ul{margin:10px 0 0;padding-left:20px}.agecard li{margin:4px 0}
+.btn.mini{flex:none;min-height:44px;padding:8px 14px;font-size:15px;margin-top:8px;display:inline-flex;align-items:center}
+.filebtn{position:relative;cursor:pointer}.filebtn input{position:absolute;opacity:0;width:1px;height:1px}
+a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none}
+.linkb{background:none;border:0;color:var(--deep);font:600 15px Inter,sans-serif;text-decoration:underline;cursor:pointer;min-height:44px}
 [hidden]{display:none!important}
-@media (prefers-reduced-motion:no-preference){.screen{animation:in .22s ease both}@keyframes in{from{opacity:0;transform:translateY(6px)}}}
+@media (prefers-reduced-motion:no-preference){.screen{animation:in .22s ease}@keyframes in{from{opacity:0}}}
 </style>
 </head>
 <body>
@@ -282,6 +294,7 @@ const FI={why:SI('<circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10
  cam:SI('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'),trash:SI('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
 book:SI('<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/>'),ruler:SI('<path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/>'),
  size:SI('<path d="M3 12h18M6 9l-3 3 3 3M18 9l3 3-3 3"/>'),cal:SI('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+ save:SI('<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>'),restore:SI('<path d="M12 21V9M7 14l5-5 5 5"/><path d="M4 7V4h16v3"/>'),
  warn:SI('<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17v.5"/>')};
 const API='https://kotzebue-track-finder-api-bm27.onrender.com';
 let a={},flow=[],step=0,photoBlob=null,thumb='',photoURL='',res=[],view='home',pendingId=null;
@@ -310,9 +323,11 @@ function home(){
     <div class="tools"><button type="button" class="tool" id="guide"><span class="ic">${FI.book}</span><span><b>Field guide</b><small>${SP.length} animals & birds, with tracks</small></span></button>
       <button type="button" class="tool" id="pats"><span class="ic">${FI.doing}</span><span><b>Trail patterns</b><small>Gaits and measuring</small></span></button>
       <button type="button" class="tool" id="quizb"><span class="ic">${FI.fact}</span><span><b>Track quiz</b><small>10 quick questions</small></span></button>
-      <button type="button" class="tool" id="ruler"><span class="ic">${FI.ruler}</span><span><b>Ruler</b><small>Measure on your screen</small></span></button></div>`);
+      <button type="button" class="tool" id="ruler"><span class="ic">${FI.ruler}</span><span><b>Ruler</b><small>Measure on your screen</small></span></button>
+      <button type="button" class="tool" id="ageb"><span class="ic">${FI.age}</span><span><b>Track age</b><small>How fresh is it?</small></span></button>
+      <button type="button" class="tool" id="mapb2"><span class="ic">${FI.local}</span><span><b>Map of finds</b><small>Where you found tracks</small></span></button></div>`);
   $('#photo').addEventListener('change',onPhoto);
-  $('#guide').addEventListener('click',()=>guide());$('#ruler').addEventListener('click',ruler);$('#pats').addEventListener('click',patterns);$('#quizb').addEventListener('click',()=>quiz(true));
+  $('#guide').addEventListener('click',()=>guide());$('#ruler').addEventListener('click',ruler);$('#pats').addEventListener('click',patterns);$('#ageb').addEventListener('click',ageTool);$('#mapb2').addEventListener('click',showMap);$('#quizb').addEventListener('click',()=>quiz(true));
   $('#taps').addEventListener('click',()=>{a={};step=0;ask()});
   const idn=$('#idNow');if(idn)idn.addEventListener('click',()=>photoId(photoBlob,''));
   const lt=$('#later');if(lt)lt.addEventListener('click',saveForLater);
@@ -327,7 +342,7 @@ function onPhoto(e){
   clearPhoto();photoURL=URL.createObjectURL(f);const img=new Image();
   img.onload=()=>{try{shrink(img,1024).toBlob(b=>{photoBlob=b||f;home()},'image/jpeg',.82);thumb=shrink(img,160).toDataURL('image/jpeg',.6)}catch(err){photoBlob=f;home()}};
   img.onerror=()=>{photoBlob=f;home()};
-  img.src=photoURL;warm();
+  img.src=photoURL;warm();getFix();
 }
 const toB64=b=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=no;r.readAsDataURL(b)});
 
@@ -338,7 +353,7 @@ async function photoStore(mode,id,blob){const db=await idb();return new Promise(
 async function saveForLater(){
   if(!photoBlob)return;const id='p'+Date.now();
   try{await photoStore('put',id,photoBlob)}catch(e){$('#msg').textContent='Couldn\'t save the photo on this phone.';return}
-  addEntry({id,sp:'Not identified yet',c:'',pending:1});
+  addEntry({id,sp:'Not identified yet',c:'',pending:1,photo:1});
   $('#msg').textContent='Saved. Open My log when you have signal and tap Identify now.';
 }
 
@@ -392,7 +407,7 @@ function detail(d,o={}){
   view='detail';
   const lv=/pretty|high/i.test(d.sure)?3:/good|medium|also/i.test(d.sure)?2:1;
   const row=(k,t,v)=>v?`<div class="fact"><span class="ic">${FI[k]}</span><div><b>${t}</b><p>${esc(v)}</p></div></div>`:'';
-  const facts=row('why',o.guide?'The track':'What gives it away',d.why)+row('size','Print size',d.size)+row('about','About',d.about)+row('doing','What it was doing',d.doing)+row('age','How old the track is',d.age)
+  const facts=row('local','Where you found it',d.where)+row('why',o.guide?'The track':'What gives it away',d.why)+row('size','Print size',d.size)+row('about','About',d.about)+row('doing','What it was doing',d.doing)+row('age','How old the track is',d.age)
     +row('local','Around Kotzebue',d.local)+row('fact','Did you know',d.fact)+row('also','Could also be',d.also)+row('next','For a surer answer',d.next);
   show(`${d.safety?`<div class="warn">${FI.warn}<div><b>Be careful.</b> ${esc(d.safety)}</div></div>`:''}
     ${o.img?`<img class="hero" src="${esc(o.img)}" alt="">`:''}
@@ -409,9 +424,9 @@ function detail(d,o={}){
       <button class="btn alt" type="button" id="next">${o.back?'Back':o.guide?'Back to guide':o.saved?'Back to log':'New track'}</button></div></div>`);
   if(o.fromLog){finishPending(o.fromLog,d);const sv0=$('#save');if(sv0)sv0.remove();$('#msg').textContent='Updated in your log.'}
   const sv=$('#save');if(sv)sv.addEventListener('click',()=>{
-    if(o.fromLog)finishPending(o.fromLog,d);else addEntry({sp:d.name,c:d.sure||'',info:d});
+    if(o.fromLog)finishPending(o.fromLog,d);else addEntry({sp:d.name,c:d.sure||'',info:d},photoBlob);
     sv.disabled=true;sv.textContent='Saved ✓';$('#msg').textContent=`Saved ${d.name} to your log.`});
-  $('#next').addEventListener('click',()=>{if(o.back)return o.back();if(o.guide)return guide();if(o.saved)return showLog();clearPhoto();home()});
+  $('#next').addEventListener('click',()=>{if(o.back&&!o.saved)return o.back();if(o.saved&&o.back)return o.back();if(o.guide)return guide();if(o.saved)return showLog();clearPhoto();home()});
   if(o.onExtra)o.onExtra();
 }
 
@@ -498,7 +513,7 @@ function guide(){
   const q=$('#q');q.addEventListener('input',()=>{gQuery=q.value;const pos=q.selectionStart;guide();const q2=$('#q');q2.focus();q2.setSelectionRange(pos,pos)});
   app.querySelectorAll('[data-f]').forEach(b=>b.addEventListener('click',()=>{gFilter=b.dataset.f;guide()}));
   app.querySelectorAll('[data-sp]').forEach(b=>b.addEventListener('click',()=>{const sp=SP.find(x=>x.n===b.dataset.sp);
-    detail(spInfo(sp),{guide:true,top:trackPanel(sp.n)})}));
+    openSpecies(sp)}));
   $('#home').addEventListener('click',home);
 }
 
@@ -660,7 +675,7 @@ function patterns(){
     </div>
     <div class="bar"><button class="btn alt" type="button" id="rul2">Open the ruler</button></div>
     <div class="dock"><div class="bar"><button class="btn alt" type="button" id="home">Back</button></div></div>`);
-  app.querySelectorAll('[data-sp]').forEach(b=>b.addEventListener('click',()=>{const sp=SP.find(x=>x.n===b.dataset.sp);if(sp)detail(spInfo(sp),{guide:true,top:trackPanel(sp.n),back:patterns})}));
+  app.querySelectorAll('[data-sp]').forEach(b=>b.addEventListener('click',()=>{const sp=SP.find(x=>x.n===b.dataset.sp);if(sp)openSpecies(sp,patterns)}));
   $('#rul2').addEventListener('click',ruler);$('#home').addEventListener('click',home);
 }
 
@@ -710,42 +725,190 @@ const KEY='ktf-log';
 const getLog=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
 const setLog=l=>{try{localStorage.setItem(KEY,JSON.stringify(l));return true}catch(e){return false}};
 const fmt=d=>{const x=new Date(d);return x.toLocaleDateString(undefined,{month:'short',day:'numeric'})+', '+x.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})};
+const pref=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}};
+const setPref=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const spMatch=n=>{n=String(n||'').toLowerCase();return n?SP.find(x=>{const b=x.n.toLowerCase().split(' (')[0];return n.includes(b)||b.includes(n)}):null};
 function count(){const l=getLog(),p=l.filter(e=>e.pending).length;$('#cnt').textContent=l.length?String(l.length):'';$('#goLog').classList.toggle('dotted',p>0)}
-function addEntry(e){
-  const l=getLog();const loc=(($('#loc')||{}).value||'').trim();
-  l.unshift({id:e.id||'e'+Date.now(),d:new Date().toISOString(),loc,thumb:thumb&&thumb!=='x'?thumb:'',...e});
-  if(!setLog(l.slice(0,300))){l[0].thumb='';setLog(l.slice(0,300))}
-  count();
+
+// GPS: where each find was made (asked once by the phone; can be switched off)
+let lastFix=null;
+const gpsOn=()=>pref('ktf-gps','1')==='1';
+function getFix(){return new Promise(ok=>{
+  if(!gpsOn()||!navigator.geolocation)return ok(null);
+  if(lastFix&&Date.now()-lastFix.t<5*60e3)return ok(lastFix);
+  navigator.geolocation.getCurrentPosition(p=>{lastFix={lat:+p.coords.latitude.toFixed(5),lon:+p.coords.longitude.toFixed(5),acc:Math.round(p.coords.accuracy),t:Date.now()};ok(lastFix)},
+    ()=>ok(null),{enableHighAccuracy:true,timeout:15000,maximumAge:120000})})}
+function addEntry(e,blob){
+  const l=getLog();const loc=(($('#loc')||{}).value||'').trim();const id=e.id||'e'+Date.now();
+  l.unshift({id,d:new Date().toISOString(),loc,thumb:thumb&&thumb!=='x'?thumb:'',...e,id});
+  if(!setLog(l.slice(0,500))){l[0].thumb='';setLog(l.slice(0,500))}
+  if(blob)photoStore('put',id,blob).then(()=>patch(id,{photo:1})).catch(()=>{});
+  getFix().then(f=>{if(f)patch(id,{lat:f.lat,lon:f.lon,acc:f.acc})});
+  count();return id;
 }
+function patch(id,obj){const l=getLog();const e=l.find(x=>x.id===id);if(e){Object.assign(e,obj);setLog(l)}}
 function finishPending(id,info){
   const l=getLog();const e=l.find(x=>x.id===id);if(!e)return;
-  Object.assign(e,{sp:info.name,c:info.sure||'',info,pending:0});setLog(l);count();photoStore('del',id).catch(()=>{});
+  Object.assign(e,{sp:info.name,c:info.sure||'',info,pending:0,photo:1});setLog(l);count();
+}
+const mapsLink=e=>`https://www.google.com/maps/search/?api=1&query=${e.lat},${e.lon}`;
+async function openEntry(e,back){
+  let img=e.thumb;if(e.photo||e.pending){try{const b=await photoStore('get',e.id);if(b)img=URL.createObjectURL(b)}catch(x){}}
+  const info=e.info||{name:e.sp,sure:e.c,about:ABOUT[e.sp]||''};const m=spMatch(e.sp);
+  const where=e.lat!=null?`<a class="btn alt" href="${mapsLink(e)}" target="_blank" rel="noopener">Open in Maps</a>`:'';
+  detail({...info,where:[e.loc,e.lat!=null?`GPS ${e.lat}, ${e.lon} (within about ${e.acc||'?'} m)`:''].filter(Boolean).join(' · ')},
+    {saved:e.d,img,top:m?trackPanel(m.n):'',extra:where,back:back||showLog});
 }
 function showLog(){
-  view='log';const l=getLog();const on=online();
+  view='log';const l=getLog();const on=online();const geo=l.filter(e=>e.lat!=null).length;
   show(`<h2>My log</h2><p class="sub">${l.length?`${l.length} track${l.length>1?'s':''} saved on this phone. Tap one for details.`:'Tracks you save show up here.'}</p>
-    <div class="log">${l.length?l.map((e,i)=>`<div class="entry">${e.thumb?`<img src="${esc(e.thumb)}" alt="">`:'<div class="ph"></div>'}
-      <button type="button" class="open" data-open="${i}"><h3>${esc(e.sp)}</h3><p>${esc(fmt(e.d))}${e.loc?' · '+esc(e.loc):''}</p>
+    ${l.length?`<div class="tools"><button type="button" class="tool" id="mapb"><span class="ic">${FI.local}</span><span><b>Map of finds</b><small>${geo} with a location</small></span></button>
+      <button type="button" class="tool" id="bk"><span class="ic">${FI.save}</span><span><b>Backup & export</b><small>Spreadsheet, backup, restore</small></span></button></div>`:''}
+    <div class="log" style="margin-top:14px">${l.length?l.map((e,i)=>`<div class="entry">${e.thumb?`<img src="${esc(e.thumb)}" alt="">`:'<div class="ph"></div>'}
+      <button type="button" class="open" data-open="${i}"><h3>${esc(e.sp)}</h3><p>${esc(fmt(e.d))}${e.loc?' · '+esc(e.loc):''}${e.lat!=null?' · GPS saved':''}</p>
         ${e.pending?'<span class="pend">Waiting to identify</span>':e.c?`<p>${esc(e.c)}</p>`:''}</button>
       <button type="button" class="del" data-del="${i}" aria-label="Delete">${FI.trash}</button>
       ${e.pending?`<button type="button" class="idnow" data-id="${esc(e.id)}" ${on?'':'disabled'}>${on?'Identify now':'Needs signal to identify'}</button>`:''}</div>`).join('')
-      :`<div class="empty">${IC.paw}<p>No tracks yet. Find one and tap Save.</p></div>`}</div>
-    ${l.length?'<div class="bar"><button class="btn alt" type="button" id="copy">Copy my log as text</button></div>':''}
-    <textarea id="ta" hidden aria-label="Log text"></textarea>
+      :`<div class="empty">${IC.paw}<p>No tracks yet. Find one and tap Save.</p><p><button type="button" class="linkb" id="bk0">Restore from a backup</button></p></div>`}</div>
     <div class="dock"><div class="bar"><button class="btn" type="button" id="home">Find a track</button></div></div>`);
-  app.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{const x=getLog();const [gone]=x.splice(+b.dataset.del,1);if(gone&&gone.pending)photoStore('del',gone.id).catch(()=>{});setLog(x);count();showLog()}));
-  app.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>{const e=l[+b.dataset.open];
-    if(e.info)detail(e.info,{saved:e.d,img:e.thumb});else if(!e.pending)detail({name:e.sp,sure:e.c,about:ABOUT[e.sp]||''},{saved:e.d,img:e.thumb})}));
+  app.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{const x=getLog();const [gone]=x.splice(+b.dataset.del,1);if(gone)photoStore('del',gone.id).catch(()=>{});setLog(x);count();showLog()}));
+  app.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>{const e=l[+b.dataset.open];if(!e.pending)openEntry(e)}));
   app.querySelectorAll('[data-id]').forEach(b=>b.addEventListener('click',async()=>{
     let blob;try{blob=await photoStore('get',b.dataset.id)}catch(e){}
     if(!blob){b.textContent='Photo missing';return}
     const e=getLog().find(x=>x.id===b.dataset.id);thumb=e&&e.thumb||'';photoId(blob,'',b.dataset.id)}));
   $('#home').addEventListener('click',()=>{clearPhoto();home()});
-  const cp=$('#copy');if(cp)cp.addEventListener('click',async()=>{
-    const txt=l.map(e=>`${fmt(e.d)} | ${e.loc||'-'} | ${e.sp} | ${e.c||'-'}`).join('\n');
-    try{await navigator.clipboard.writeText(txt);cp.textContent='Copied ✓'}catch(err){const ta=$('#ta');ta.hidden=false;ta.value=txt;ta.select();cp.textContent='Copy the text below'}
-  });
+  const mb=$('#mapb');if(mb)mb.addEventListener('click',showMap);
+  const bk=$('#bk')||$('#bk0');if(bk)bk.addEventListener('click',backupScreen);
 }
+
+// ---------- map of finds (map pictures need signal; locations are saved offline) ----------
+function loadLeaflet(){return new Promise((ok,no)=>{
+  if(window.L)return ok();
+  const c=document.createElement('link');c.rel='stylesheet';c.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(c);
+  const sc=document.createElement('script');sc.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';sc.onload=()=>ok();sc.onerror=no;document.head.appendChild(sc)})}
+async function showMap(){
+  view='map';const pts=getLog().filter(e=>e.lat!=null);
+  show(`<h2>Map of my finds</h2><p class="sub">${pts.length?`${pts.length} find${pts.length>1?'s':''} with a location. Tap a dot for details.`:'No finds with a location yet. New finds save your location automatically.'}</p>
+    <div class="card mapbox" id="map"><p class="sub" style="padding:20px">Loading the map…</p></div>
+    <div class="dock"><div class="bar"><button class="btn alt" type="button" id="bk">Back to log</button></div></div>`);
+  $('#bk').addEventListener('click',showLog);
+  try{if(!online())throw 0;await loadLeaflet()}catch(e){$('#map').innerHTML='<p class="sub" style="padding:20px">The map needs signal to load. Your locations are saved and will show here when you\'re back in signal.</p>';return}
+  if(view!=='map')return;
+  const box=$('#map');box.innerHTML='';
+  const map=L.map(box,{zoomControl:true,attributionControl:true}).setView([66.8983,-162.5967],9);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+  const all=[];
+  pts.forEach(e=>{const ll=[e.lat,e.lon];all.push(ll);
+    const pop=document.createElement('div');const h=document.createElement('b');h.textContent=e.sp;const d=document.createElement('div');d.textContent=fmt(e.d)+(e.loc?' · '+e.loc:'');
+    const bt=document.createElement('button');bt.type='button';bt.className='popb';bt.textContent='Details';bt.addEventListener('click',()=>openEntry(e,showMap));
+    pop.append(h,d,bt);
+    L.circleMarker(ll,{radius:9,color:'#fff',weight:2,fillColor:e.pending?'#e2561d':'#1d4a3e',fillOpacity:1}).addTo(map).bindPopup(pop)});
+  if(all.length>1)map.fitBounds(all,{padding:[30,30],maxZoom:14});else if(all.length)map.setView(all[0],13);
+  const me=lastFix;if(me)L.circleMarker([me.lat,me.lon],{radius:6,color:'#2f9e6e',weight:3,fillOpacity:.3}).addTo(map).bindPopup('You were here');
+}
+
+// ---------- backup & export ----------
+const today=()=>new Date().toISOString().slice(0,10);
+async function saveFile(name,blob){
+  const file=new File([blob],name,{type:blob.type});
+  if(matchMedia('(pointer:coarse)').matches&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name});return 'shared'}catch(e){if(e.name==='AbortError')return 'cancel'}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);return 'saved';
+}
+const csvCell=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+const b2d=b=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(b)});
+function backupScreen(){
+  view='backup';const l=getLog();
+  show(`<h2>Backup & export</h2><p class="sub">Your log lives only on this phone. Save a backup now and then, and after you get a new phone.</p>
+    <div class="card facts">
+      <div class="fact"><span class="ic">${FI.book}</span><div><b>Spreadsheet</b><p>A file you can open in Excel or Google Sheets: date, animal, place, GPS and confidence. Photos are not included.</p>
+        <button class="btn alt mini" type="button" id="csv" ${l.length?'':'disabled'}>Save spreadsheet</button></div></div>
+      <div class="fact"><span class="ic">${FI.save}</span><div><b>Full backup</b><p>Everything, including your photos, in one file. Keep it in your email, Google Drive or Files app.</p>
+        <button class="btn alt mini" type="button" id="full" ${l.length?'':'disabled'}>Save full backup</button></div></div>
+      <div class="fact"><span class="ic">${FI.restore}</span><div><b>Restore</b><p>Open a full backup file to bring your log back. Finds you already have are kept.</p>
+        <label class="btn alt mini filebtn">Restore from backup<input type="file" id="rf" accept=".json,application/json"></label></div></div>
+      <div class="fact"><span class="ic">${FI.local}</span><div><b>Save location with finds</b><p>Uses your phone's GPS to record where each track was. Stays on this phone unless you export it.</p>
+        <div class="seg" style="margin:8px 0 0"><button type="button" data-g="1" class="${gpsOn()?'on':''}">On</button><button type="button" data-g="0" class="${gpsOn()?'':'on'}">Off</button></div></div></div>
+    </div>
+    <div class="msg" id="msg" role="status"></div>
+    <div class="dock"><div class="bar"><button class="btn alt" type="button" id="bk">Back to log</button></div></div>`);
+  $('#bk').addEventListener('click',showLog);
+  app.querySelectorAll('[data-g]').forEach(b=>b.addEventListener('click',()=>{setPref('ktf-gps',b.dataset.g);if(b.dataset.g==='1')getFix();backupScreen()}));
+  $('#csv').addEventListener('click',async()=>{
+    const rows=[['Date','Time','Animal or bird','Confidence','Place','Latitude','Longitude','GPS accuracy (m)','About']];
+    getLog().forEach(e=>{const d=new Date(e.d);rows.push([d.toLocaleDateString(),d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}),e.sp,e.c||'',e.loc||'',e.lat??'',e.lon??'',e.acc??'',(e.info&&e.info.about)||ABOUT[e.sp]||''])});
+    const r=await saveFile(`track-log-${today()}.csv`,new Blob(['﻿'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n')],{type:'text/csv'}));
+    $('#msg').textContent=r==='cancel'?'':'Spreadsheet ready.'});
+  $('#full').addEventListener('click',async()=>{
+    $('#msg').textContent='Preparing your backup…';const log=getLog();const photos={};
+    for(const e of log){try{const b=await photoStore('get',e.id);if(b)photos[e.id]=await b2d(b)}catch(x){}}
+    const r=await saveFile(`track-finder-backup-${today()}.json`,new Blob([JSON.stringify({app:'kotzebue-track-finder',version:1,saved:new Date().toISOString(),log,photos})],{type:'application/json'}));
+    $('#msg').textContent=r==='cancel'?'':`Backup ready: ${log.length} finds, ${Object.keys(photos).length} photos.`});
+  $('#rf').addEventListener('change',async ev=>{
+    const f=ev.target.files&&ev.target.files[0];if(!f)return;
+    try{const j=JSON.parse(await f.text());if(j.app!=='kotzebue-track-finder'||!Array.isArray(j.log))throw 0;
+      const l=getLog();const have=new Set(l.map(e=>e.id));let n=0;
+      for(const e of j.log){if(!e||!e.id||have.has(e.id))continue;
+        const keep={};['id','d','sp','c','loc','thumb','lat','lon','acc','pending','photo','info'].forEach(k=>{if(e[k]!==undefined)keep[k]=e[k]});
+        l.push(keep);n++;
+        const p=j.photos&&j.photos[e.id];if(typeof p==='string'&&p.startsWith('data:image/')){try{await photoStore('put',e.id,await (await fetch(p)).blob())}catch(x){}}}
+      l.sort((x,y)=>String(y.d).localeCompare(String(x.d)));setLog(l.slice(0,500));count();
+      $('#msg').textContent=n?`Restored ${n} find${n>1?'s':''}.`:'Nothing new in that backup.';
+    }catch(x){$('#msg').textContent='That file isn\'t a Track Finder backup.'}});
+}
+
+// ---------- your photos in the field guide ----------
+async function gallery(name){
+  const box=$('#gal');if(!box)return;
+  const mine=getLog().filter(e=>!e.pending&&spMatch(e.sp)&&spMatch(e.sp).n===name);
+  if(!mine.length){box.innerHTML=`<p class="section">Your photos</p><p class="sub" style="margin:4px 0 0">When you save a ${esc(name.toLowerCase())} track, your photo will show up here.</p>`;return}
+  const pics=[];for(const e of mine.slice(0,12)){let src=e.thumb;try{const b=await photoStore('get',e.id);if(b)src=URL.createObjectURL(b)}catch(x){}if(src)pics.push([e,src])}
+  if(view!=='detail')return;
+  box.innerHTML=`<p class="section">Your photos (${mine.length})</p><div class="gal">${pics.map(([e,src],i)=>`<button type="button" data-g="${i}"><img src="${esc(src)}" alt=""><span>${esc(fmt(e.d))}</span></button>`).join('')}</div>`;
+  box.querySelectorAll('[data-g]').forEach(b=>b.addEventListener('click',()=>{const sp=SP.find(x=>x.n===name);openEntry(pics[+b.dataset.g][0],()=>openSpecies(sp))}));
+}
+function openSpecies(sp,back){detail(spInfo(sp),{guide:true,top:trackPanel(sp.n)+'<div id="gal"></div>',back:back||(()=>guide()),onExtra:()=>gallery(sp.n)})}
+
+// ---------- track age helper (offline) ----------
+const AGEQ=[
+ ['look','What do the track edges look like?',[['crisp','Sharp and crisp'],['rounded','A little rounded'],['soft','Soft and blurry'],['filled','Snow inside the print'],['icy','Hard or icy crust']]],
+ ['snow','When did it last snow?',[['today','Today'],['yday','Yesterday'],['few','2–3 days ago'],['old','4+ days ago']]],
+ ['wind','How windy has it been?',[['calm','Calm'],['breezy','Breezy'],['strong','Strong wind']]],
+ ['temp','Temperature lately?',[['cold','Below 0°F'],['cool','0 to 20°F'],['mild','20 to 32°F'],['thaw','Above freezing']]]
+];
+let ageA={};
+function ageEstimate(a){
+  if(!a.look)return null;const why=[];let head,fresh=false;
+  if(a.look==='crisp'){fresh=true;head=a.wind==='strong'?'Very fresh: probably less than an hour old':'Fresh: probably less than a few hours old';
+    why.push('Sharp edges and crisp toe marks haven\'t had time to soften.');if(a.wind==='strong')why.push('Strong wind rounds edges fast, so crisp prints must be very new.');
+    if(a.temp==='cold'&&a.wind==='calm')why.push('In calm, very cold weather, prints can stay crisp a bit longer, so allow up to half a day.')}
+  if(a.look==='rounded'){head=a.wind==='strong'?'Probably a few hours old':a.temp==='cold'&&a.wind==='calm'?'Probably about a day old':'Probably several hours to a day old';
+    why.push('Slightly rounded edges mean wind, sun or settling have started to soften the print.')}
+  if(a.look==='soft'){head=a.temp==='thaw'||a.temp==='mild'?'Probably about a day old, maybe less':'Probably 1 to 2 days old';
+    why.push('Soft, blurry edges take time to form.');if(a.temp==='thaw'||a.temp==='mild')why.push('Warm weather softens tracks quickly, so it could be younger.')}
+  if(a.look==='filled'){head={today:'Made before today\'s snowfall',yday:'Made before yesterday\'s snow: more than a day old',few:'Made before the snow 2–3 days ago: about 3 days old or more',old:'Several days old or more'}[a.snow]||'Made before the last snowfall';
+    why.push('New snow sitting inside the print means the track was there when the snow fell.')}
+  if(a.look==='icy'){head='Likely 2 or more days old';why.push('A hard crust forms when snow softens and then refreezes, which takes at least a day.')}
+  if(a.look!=='filled'&&a.snow==='today')why.push('There\'s no new snow in it, so it was made after today\'s snowfall.');
+  if(a.look!=='filled'&&a.snow==='yday')why.push('There\'s no new snow in it, so it was made after yesterday\'s snow.');
+  if(a.wind==='strong'&&a.look!=='crisp')why.push('Strong wind can also fill or erase prints, so older tracks may be gone.');
+  return {head,why,fresh};
+}
+function ageTool(){
+  view='age';const r=ageEstimate(ageA);
+  show(`<h2>How old is the track?</h2><p class="sub">Answer what you can. The estimate updates as you tap.</p>
+    ${r?`<div class="card big agecard"><div class="lbl">Estimate</div><h3 style="font-size:30px">${esc(r.head)}</h3>
+      <ul>${r.why.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>${r.fresh?'<div class="warn" style="margin:10px 0 0">'+FI.warn+'<div><b>Fresh tracks</b> mean the animal may be close. Keep your distance from bear, moose and wolf tracks.</div></div>':''}</div>`
+      :`<div class="card big agecard"><div class="lbl">Estimate</div><p style="margin:6px 0 0">Start with what the edges of the print look like.</p></div>`}
+    ${AGEQ.map(([k,q,opts])=>`<p class="section">${q}</p><div class="chips big">${opts.map(([v,l])=>`<button type="button" data-k="${k}" data-v="${v}" class="${ageA[k]===v?'on':''}">${l}</button>`).join('')}</div>`).join('')}
+    <div class="dock"><div class="bar"><button class="btn alt" type="button" id="clr">Clear</button><button class="btn" type="button" id="home">Done</button></div></div>`);
+  app.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.k;ageA[k]=ageA[k]===b.dataset.v?undefined:b.dataset.v;const y=scrollY;ageTool();scrollTo(0,y)}));
+  $('#clr').addEventListener('click',()=>{ageA={};ageTool()});$('#home').addEventListener('click',home);
+}
+
+// keep the free photo server awake while the app is open, so photo checks are quick
+addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')warm()});
+setInterval(()=>{if(document.visibilityState==='visible')warm()},10*60e3);
 $('#goLog').addEventListener('click',showLog);
 
 count();home();warm();
