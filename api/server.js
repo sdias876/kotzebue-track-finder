@@ -67,7 +67,7 @@ Reply with JSON only, no other text:
 
 async function askGemini(image, prompt) {
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GMODEL}:generateContent`, {
-    method: 'POST',
+    method: 'POST', signal: AbortSignal.timeout(45000),
     headers: { 'x-goog-api-key': GKEY, 'content-type': 'application/json' },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ inline_data: { mime_type: 'image/jpeg', data: image } }, { text: prompt }] }],
@@ -81,7 +81,7 @@ async function askGemini(image, prompt) {
 
 async function askClaude(image, prompt) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
+    method: 'POST', signal: AbortSignal.timeout(45000),
     headers: { 'x-api-key': KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
     body: JSON.stringify({
       model: MODEL,
@@ -118,7 +118,9 @@ http.createServer((req, res) => {
     if (String(body.code || '').trim().toLowerCase() !== CODE.trim().toLowerCase()) return send(res, 401, { error: 'wrong_code' });
     if (typeof body.image !== 'string' || body.image.length < 100 || !/^[A-Za-z0-9+/=]+$/.test(body.image)) return send(res, 400, { error: 'no_photo' });
     if (limited(ip)) return send(res, 429, { error: 'too_many' });
-    try { send(res, 200, await identify(body)); }
-    catch (e) { console.error(e.message); send(res, 502, { error: 'failed' }); }
+    const t0 = Date.now();
+    console.log('identify: start, photo', Math.round(body.image.length / 1024), 'KB, using', GKEY ? GMODEL : MODEL);
+    try { const out = await identify(body); console.log('identify: ok in', Date.now() - t0, 'ms ->', out.name); send(res, 200, out); }
+    catch (e) { console.error('identify: failed in', Date.now() - t0, 'ms:', e.name, e.message); send(res, 502, { error: 'failed' }); }
   });
 }).listen(PORT, () => console.log('Track Finder photo server on port', PORT));
