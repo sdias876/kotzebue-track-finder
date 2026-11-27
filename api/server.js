@@ -5,7 +5,8 @@
 // Environment variables (set in the Render dashboard):
 //   GEMINI_API_KEY     Google Gemini key (free plan, from aistudio.google.com). Used first if set.
 //   ANTHROPIC_API_KEY  Anthropic key (paid). Used if no Gemini key is set.
-//   GEMINI_MODEL       optional. Defaults to gemini-flash-latest (Google's newest fast model).
+//   GEMINI_MODEL       optional. Defaults to gemini-3.5-flash (about 2 seconds per photo).
+//   GEMINI_BACKUP_MODEL optional. Tried if the main model fails. Defaults to gemini-3.1-flash-lite.
 //   APP_CODE           required. Access code the app must send, so strangers can't use your key.
 //   ALLOWED_ORIGIN     optional. Defaults to the app's address.
 //   MODEL              optional. Defaults to claude-sonnet-5-5.
@@ -15,7 +16,8 @@ const http = require('http');
 const PORT = process.env.PORT || 10000;
 const KEY = process.env.ANTHROPIC_API_KEY || '';
 const GKEY = process.env.GEMINI_API_KEY || '';
-const GMODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
+const GMODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+const GBACKUP = process.env.GEMINI_BACKUP_MODEL || 'gemini-3.1-flash-lite';
 const CODE = process.env.APP_CODE || '';
 const ORIGIN = process.env.ALLOWED_ORIGIN || 'https://kotzebue-track-finder-5frq.onrender.com';
 const MODEL = process.env.MODEL || 'claude-sonnet-5-5';
@@ -58,9 +60,12 @@ For "inupiaq", give the Iñupiaq name only if you are confident of it; otherwise
 Reply with JSON only, no other text:
 {"name":"common name","sure":"Pretty sure|Good guess|Rough guess","why":"what in the photo points to it, one sentence","also":"second most likely, or empty","inupiaq":"","about":"two sentences on what the animal is like","doing":"what it was probably doing, from the track, one sentence","age":"how old the track looks and why, one sentence","local":"where and when it is found around Kotzebue, one sentence","safety":"one sentence if there is any safety concern (bear, moose, wolf, thin ice, a fresh kill), else empty","fact":"one interesting fact","next":"one tip to get a surer answer, or empty"}`;
 
-  const TRY = ['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-3.1-flash-lite','gemini-3.5-flash','gemini-3.5-flash-lite','gemini-3.8-flash','gemini-flash-lite-latest','gemini-flash-latest'];
-  const model = TRY.includes(body.model) ? body.model : GMODEL;
-  const text = GKEY ? await askGemini(body.image, prompt, model) : await askClaude(body.image, prompt);
+  let text;
+  if (!GKEY) text = await askClaude(body.image, prompt);
+  else {
+    try { text = await askGemini(body.image, prompt, GMODEL); }
+    catch (e) { console.warn('main model failed, trying backup', GBACKUP); text = await askGemini(body.image, prompt, GBACKUP); }
+  }
   const j = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
   const out = {};
   for (const k of ['name','sure','why','also','inupiaq','about','doing','age','local','safety','fact','next']) out[k] = clean(j[k], 400);
@@ -75,7 +80,7 @@ function thinking(model) {
 }
 async function askGemini(image, prompt, model = GMODEL) {
   const call = think => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: 'POST', signal: AbortSignal.timeout(45000),
+    method: 'POST', signal: AbortSignal.timeout(25000),
     headers: { 'x-goog-api-key': GKEY, 'content-type': 'application/json' },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ inline_data: { mime_type: 'image/jpeg', data: image } }, { text: prompt }] }],
@@ -129,7 +134,7 @@ http.createServer((req, res) => {
     if (typeof body.image !== 'string' || body.image.length < 100 || !/^[A-Za-z0-9+/=]+$/.test(body.image)) return send(res, 400, { error: 'no_photo' });
     if (limited(ip)) return send(res, 429, { error: 'too_many' });
     const t0 = Date.now();
-    console.log('identify: start, photo', Math.round(body.image.length / 1024), 'KB, using', GKEY ? (body.model || GMODEL) : MODEL);
+    console.log('identify: start, photo', Math.round(body.image.length / 1024), 'KB, using', GKEY ? GMODEL : MODEL);
     try { const out = await identify(body); console.log('identify: ok in', Date.now() - t0, 'ms ->', out.name); send(res, 200, out); }
     catch (e) { console.error('identify: failed in', Date.now() - t0, 'ms:', e.name, e.message); send(res, 502, { error: 'failed' }); }
   });
