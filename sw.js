@@ -1,5 +1,5 @@
 // Offline support: keep the app and its fonts on the phone.
-const CACHE = 'tracks-v4';
+const CACHE = 'tracks-v5';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

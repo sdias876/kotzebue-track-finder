@@ -38,7 +38,7 @@ header{position:sticky;top:0;z-index:5;background:linear-gradient(135deg,var(--s
 #goLog svg{width:20px;height:20px}
 #cnt:not(:empty){min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#fff;color:var(--spruce);font-size:12.5px;font-weight:700;display:grid;place-items:center}
 #goLog.dotted #cnt{background:var(--blaze);color:#fff}
-main{max-width:600px;margin:0 auto;padding:18px max(4vw,14px) 120px}
+main{max-width:600px;margin:0 auto;padding:18px max(4vw,14px) 150px}
 .screen h2{font-size:clamp(32px,9vw,40px);margin:4px 0 6px}
 .sub{color:var(--soft);margin:0 0 18px}
 .status{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--chip);font-size:13.5px;font-weight:600;color:var(--soft);margin:2px 0 14px}
@@ -92,7 +92,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--blaze);outline-
 .small>span{font-size:26px;color:var(--soft)}
 .section{font-size:13px;font-weight:600;color:var(--soft);letter-spacing:.02em;margin:22px 0 0}
 .warn{display:flex;gap:10px;background:var(--warn);border:1px solid light-dark(#f6c9b3,#5b3322);padding:12px 14px;border-radius:16px;margin:0 0 14px}
-.warn b{color:var(--blazeink)}
+.warn b{color:var(--blazeink)}.warn>svg{width:22px;height:22px;flex:none;margin-top:2px;color:var(--blazeink)}
 input[type=text]{width:100%;font:16px Inter,sans-serif;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;min-height:52px;margin-top:14px}
 .msg{min-height:22px;color:var(--deep);font-weight:600;margin-top:10px;font-size:15px}
 .wait{text-align:center}.wait .photo{margin-bottom:22px}
@@ -122,6 +122,21 @@ textarea{width:100%;min-height:140px;font:14px Inter,sans-serif;margin-top:10px;
 .rul{padding:0 0 0 0;overflow:hidden;border-radius:0 16px 16px 0;border-left:0}
 .calbox{margin:10px 0 18px;border:3px solid var(--ok);border-radius:12px;background:#2f9e6e1a;display:grid;place-items:center;color:var(--ok);font-weight:700}
 input[type=range]{width:100%;height:44px;accent-color:var(--blaze)}
+.tracks{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 28px;padding:16px;margin-top:14px}
+.tracks figure,.qpic figure{margin:0;text-align:center}.tracks svg{width:92px;height:110px;color:var(--deep)}
+.tracks figcaption,.qpic figcaption{font-size:13px;font-weight:600;color:var(--soft);margin-top:4px}
+.tracks p{flex-basis:100%;margin:6px 0 0;font-size:12.5px;color:var(--soft);text-align:center}
+.gi svg{width:34px;height:40px;color:var(--deep)}
+.pat{display:grid;grid-template-columns:74px minmax(0,1fr);gap:14px;padding:14px 16px}
+.pd svg{width:74px;height:172px;color:var(--deep)}
+.pat h3{font-size:24px}.pat .how{margin:2px 0 6px;font-weight:600;color:var(--blazeink);font-size:14px}.pat p{margin:0 0 8px;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chips button{min-height:36px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--chip);color:var(--ink);font:500 13.5px Inter,sans-serif;cursor:pointer}
+.qpic{display:flex;justify-content:center;gap:30px;padding:18px;margin-top:6px}.qpic svg{width:110px;height:132px;color:var(--deep)}.qpic.pq svg{width:90px;height:210px}
+.opts{display:grid;gap:10px;margin-top:16px}
+.opt{min-height:54px;padding:12px 16px;border-radius:15px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:600 16px Inter,sans-serif;text-align:left;cursor:pointer;box-shadow:var(--sh)}
+.opt.right{border-color:var(--ok);background:light-dark(#e7f6ee,#16301f)}.opt.wrong{border-color:var(--blaze);background:var(--warn)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.fbk{margin-top:14px;padding:14px 16px;border-left:5px solid var(--blaze)}.fbk.ok{border-left-color:var(--ok)}.fbk p{margin:4px 0 0}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:no-preference){.screen{animation:in .22s ease both}@keyframes in{from{opacity:0;transform:translateY(6px)}}}
 </style>
@@ -292,10 +307,12 @@ function home(){
     <div class="status ${on?'on':''}"><i></i>${on?'Signal: photo check ready':'No signal: tap mode works offline'}</div>
     <label class="photo">${pic}<input type="file" id="photo" accept="image/*" capture="environment"></label>
     <div class="bar wrap">${btns}</div><div class="msg" id="msg" role="status"></div>
-    <div class="tools"><button type="button" class="tool" id="guide"><span class="ic">${FI.book}</span><span><b>Field guide</b><small>${SP.length} local animals & birds</small></span></button>
+    <div class="tools"><button type="button" class="tool" id="guide"><span class="ic">${FI.book}</span><span><b>Field guide</b><small>${SP.length} animals & birds, with tracks</small></span></button>
+      <button type="button" class="tool" id="pats"><span class="ic">${FI.doing}</span><span><b>Trail patterns</b><small>Gaits and measuring</small></span></button>
+      <button type="button" class="tool" id="quizb"><span class="ic">${FI.fact}</span><span><b>Track quiz</b><small>10 quick questions</small></span></button>
       <button type="button" class="tool" id="ruler"><span class="ic">${FI.ruler}</span><span><b>Ruler</b><small>Measure on your screen</small></span></button></div>`);
   $('#photo').addEventListener('change',onPhoto);
-  $('#guide').addEventListener('click',()=>guide());$('#ruler').addEventListener('click',ruler);
+  $('#guide').addEventListener('click',()=>guide());$('#ruler').addEventListener('click',ruler);$('#pats').addEventListener('click',patterns);$('#quizb').addEventListener('click',()=>quiz(true));
   $('#taps').addEventListener('click',()=>{a={};step=0;ask()});
   const idn=$('#idNow');if(idn)idn.addEventListener('click',()=>photoId(photoBlob,''));
   const lt=$('#later');if(lt)lt.addEventListener('click',saveForLater);
@@ -354,7 +371,8 @@ async function photoId(blob,answers,fromLog){
     if(r.status===503)return failed('Photo checking isn\'t switched on yet.',blob,fromLog);
     if(r.status===429)return failed('Too many photos this hour. Try again later.',blob,fromLog);
     if(!r.ok||!j.name)return failed('Something went wrong checking the photo.',blob,fromLog);
-    detail(j,{photo:true,fromLog});
+    const m=SP.find(x=>j.name&&(j.name.toLowerCase().includes(x.n.toLowerCase().split(' (')[0])||x.n.toLowerCase().includes(j.name.toLowerCase())));
+    detail(j,{photo:true,fromLog,top:m?trackPanel(m.n):''});
   }catch(e){failed(e.name==='AbortError'?'It took too long. The signal may be weak.':'Couldn\'t connect. The signal may be weak.',blob,fromLog)}
   finally{clearTimeout(slow);clearTimeout(to)}
 }
@@ -381,18 +399,19 @@ function detail(d,o={}){
     <div class="card big"><div class="lbl">${o.guide?'Field guide':o.saved?esc(fmt(o.saved)):o.photo?'Identified from your photo':'Best match from your answers'}</div>
       <h3>${esc(d.name)}</h3>${d.inupiaq?`<em>${esc(d.inupiaq)}</em>`:''}
       ${d.sure?`<div class="meter"><span>${[1,2,3].map(i=>`<i class="${i<=lv?'on':''}"></i>`).join('')}</span>${esc(d.sure)}</div>`:''}</div>
+    ${o.top||''}
     ${facts?`<div class="card facts">${facts}</div>`:''}
     <div id="more"></div>
     ${o.saved||o.guide?'':`<input type="text" id="loc" placeholder="Where were you? (optional)" aria-label="Location">`}
     <div class="msg" id="msg" role="status"></div>
     ${o.extra?`<div class="bar wrap">${o.extra}</div>`:''}
     <div class="dock"><div class="bar">${o.saved||o.guide?'':'<button class="btn" type="button" id="save">Save to log</button>'}
-      <button class="btn alt" type="button" id="next">${o.guide?'Back to guide':o.saved?'Back to log':'New track'}</button></div></div>`);
+      <button class="btn alt" type="button" id="next">${o.back?'Back':o.guide?'Back to guide':o.saved?'Back to log':'New track'}</button></div></div>`);
   if(o.fromLog){finishPending(o.fromLog,d);const sv0=$('#save');if(sv0)sv0.remove();$('#msg').textContent='Updated in your log.'}
   const sv=$('#save');if(sv)sv.addEventListener('click',()=>{
     if(o.fromLog)finishPending(o.fromLog,d);else addEntry({sp:d.name,c:d.sure||'',info:d});
     sv.disabled=true;sv.textContent='Saved ✓';$('#msg').textContent=`Saved ${d.name} to your log.`});
-  $('#next').addEventListener('click',()=>{if(o.guide)return guide();if(o.saved)return showLog();clearPhoto();home()});
+  $('#next').addEventListener('click',()=>{if(o.back)return o.back();if(o.guide)return guide();if(o.saved)return showLog();clearPhoto();home()});
   if(o.onExtra)o.onExtra();
 }
 
@@ -438,12 +457,12 @@ function results(){
   const others=res.slice(1).map(r=>r.sp.n).join(' or ');
   const canPhoto=photoBlob&&online();
   const extra=(canPhoto?'<button class="btn alt" type="button" id="chk">Check my photo too</button>':'')+'<button class="btn alt" type="button" id="chg">Change my answers</button>';
-  detail(infoFor(res[0],c,''),{extra,onExtra:()=>{
+  detail(infoFor(res[0],c,''),{top:trackPanel(res[0].sp.n),extra,onExtra:()=>{
     const ck=$('#chk');if(ck)ck.addEventListener('click',()=>photoId(photoBlob,answerText()));
     $('#chg').addEventListener('click',()=>{step=flow.length-1;ask()});
     if(res.length>1){const box=$('#more');box.className='also';
       box.innerHTML='<p class="section">Other possibilities</p>'+res.slice(1).map((r,i)=>`<button type="button" class="small" data-o="${i+1}"><div><h3>${esc(r.sp.n)}</h3><p>${esc(r.sp.tip)}</p></div><span aria-hidden="true">›</span></button>`).join('');
-      box.querySelectorAll('[data-o]').forEach(b=>b.addEventListener('click',()=>{const r=res[+b.dataset.o];detail(infoFor(r,'Possible',res[0].sp.n),{extra:'<button class="btn alt" type="button" id="bk">Back to best match</button>',onExtra:()=>$('#bk').addEventListener('click',results)})}));
+      box.querySelectorAll('[data-o]').forEach(b=>b.addEventListener('click',()=>{const r=res[+b.dataset.o];detail(infoFor(r,'Possible',res[0].sp.n),{top:trackPanel(r.sp.n),extra:'<button class="btn alt" type="button" id="bk">Back to best match</button>',onExtra:()=>$('#bk').addEventListener('click',results)})}));
     }
   }});
 }
@@ -473,13 +492,13 @@ function guide(){
   show(`<h2>Field guide</h2><p class="sub">Works offline. Tap an animal for details.</p>
     <input type="text" id="q" placeholder="Search by name" value="${esc(gQuery)}" aria-label="Search" style="margin-top:0">
     <div class="seg">${F.map(([v,l])=>`<button type="button" data-f="${v}" class="${gFilter===v?'on':''}">${l}</button>`).join('')}</div>
-    <div class="log">${list.map(sp=>`<button type="button" class="small" data-sp="${esc(sp.n)}"><span class="gi">${sp.k==='bird'?IC.bird:sp.k==='hoof'?IC.hoof:IC.paw}</span>
+    <div class="log">${list.map(sp=>`<button type="button" class="small" data-sp="${esc(sp.n)}"><span class="gi">${trackArt(sp.n,false)}</span>
       <div><h3>${esc(sp.n)}</h3><p>${sp.inu?esc(sp.inu)+' · ':''}${sp.sz[0]}–${sp.sz[1]} in</p></div><span aria-hidden="true">›</span></button>`).join('')||'<p class="empty">No match.</p>'}</div>
     <div class="dock"><div class="bar"><button class="btn alt" type="button" id="home">Back</button></div></div>`);
   const q=$('#q');q.addEventListener('input',()=>{gQuery=q.value;const pos=q.selectionStart;guide();const q2=$('#q');q2.focus();q2.setSelectionRange(pos,pos)});
   app.querySelectorAll('[data-f]').forEach(b=>b.addEventListener('click',()=>{gFilter=b.dataset.f;guide()}));
   app.querySelectorAll('[data-sp]').forEach(b=>b.addEventListener('click',()=>{const sp=SP.find(x=>x.n===b.dataset.sp);
-    detail(spInfo(sp),{guide:true})}));
+    detail(spInfo(sp),{guide:true,top:trackPanel(sp.n)})}));
   $('#home').addEventListener('click',home);
 }
 
@@ -510,6 +529,180 @@ function calibrate(){
   sl.addEventListener('input',set);
   $('#ok').addEventListener('click',()=>{try{localStorage.setItem('ktf-ppi',String(sl.value/3.37))}catch(e){}ruler()});
   $('#cancel').addEventListener('click',home);
+}
+
+// ---------- track drawings (simplified, not to scale) ----------
+const TR={
+ 'Arctic fox':{t:'canid',fur:2.4},'Red fox':{t:'canid',fur:1.2},'Dog':{t:'canid',spread:1.18},'Wolf':{t:'canid'},
+ 'Lynx':{t:'felid'},'Ermine (weasel)':{t:'must',small:1},'Mink':{t:'must'},'River otter':{t:'must',web:1},'Wolverine':{t:'must',big:1},
+ 'Vole or lemming':{t:'vole'},'Muskrat':{t:'muskrat'},'Snowshoe hare':{t:'hare'},'Alaska hare':{t:'hare',long:1},'Porcupine':{t:'porc'},'Beaver':{t:'beaver'},
+ 'Brown bear':{t:'bear'},'Caribou':{t:'hoof',k:'caribou'},'Muskox':{t:'hoof',k:'muskox'},'Moose':{t:'hoof',k:'moose'},
+ 'Redpoll':{t:'bird',w:4,back:20,toe:30},'Snow bunting':{t:'bird',w:4.5,back:32,toe:30},'Shorebird':{t:'bird',w:3.5,back:0,toe:38},
+ 'Rock ptarmigan':{t:'bird',w:11,back:10,toe:30,fur:2},'Willow ptarmigan':{t:'bird',w:12.5,back:10,toe:33,fur:2.2},
+ 'Duck':{t:'web'},'Gull':{t:'web',narrow:1},'Goose':{t:'web',wide:1},'Snowy owl':{t:'zygo'},'Raven':{t:'bird',w:6.5,back:34,toe:38},
+ 'Sandhill crane':{t:'bird',w:5,back:7,toe:46}
+};
+const El=(x,y,rx,ry,r=0,o=1)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"${r?` transform="rotate(${r} ${x} ${y})"`:''}${o<1?` opacity="${o}"`:''}/>`;
+const mirror=s=>`${s}<g transform="translate(100 0) scale(-1 1)">${s}</g>`;
+const blur=(s,b)=>b?`<g filter="url(#tb${String(b).replace('.','')})">${s}</g>`:s;
+const fdefs=[1.2,2,2.2,2.4,3].map(b=>`<filter id="tb${String(b).replace('.','')}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${b}"/></filter>`).join('');
+function trackArt(name,hind){
+  const p=TR[name];if(!p)return '';
+  let s='';
+  switch(p.t){
+  case 'canid':{const k=hind?.86:1,sp=p.spread||1,X=x=>50+(x-50)*k*sp;
+    const toes=[[30,46,8.5,11,-14],[70,46,8.5,11,14],[41,25,7.6,11,-5],[59,25,7.6,11,5]];
+    s+=toes.map(([x,y,a,b,r])=>El(X(x),y,a*k,b,r)).join('');
+    if(!p.fur||p.fur<2)s+=toes.map(([x,y,,,r])=>El(X(x)+(x<50?-1:1)*(r?2:.5),y-15,2,3.2,r)).join('');
+    const w=k*sp;s+=`<path d="M50 62 C${50+12*w} 62 ${50+22*w} 74 ${50+20*w} 88 C${50+18*w} 99 ${50+8*w} 99 50 94 C${50-8*w} 99 ${50-18*w} 99 ${50-20*w} 88 C${50-22*w} 74 ${50-12*w} 62 50 62Z"/>`;
+    s=blur(s,p.fur);break}
+  case 'felid':{const k=hind?.9:1,X=x=>50+(x-50)*k;
+    s+=[[27,50,9,10],[40,30,9,10.5],[60,30,9,10.5],[73,50,9,10]].map(([x,y,a,b])=>El(X(x),y,a*k,b)).join('');
+    s+=`<path d="M50 ${hind?64:60} C${50+17*k} 60 ${50+26*k} 72 ${50+24*k} 86 C${50+22*k} 96 ${50+15*k} 100 ${50+9*k} 96 C${50+5*k} 101 ${50-5*k} 101 ${50-9*k} 96 C${50-15*k} 100 ${50-22*k} 96 ${50-24*k} 86 C${50-26*k} 72 ${50-17*k} 60 50 ${hind?64:60}Z"/>`;
+    s=blur(s,1.2);break}
+  case 'must':{const big=p.big?1.18:1,k=(hind?.92:1)*big,X=x=>50+(x-50)*k;
+    const toes=[0,1,2,3,4].map(i=>[X(50+(i-2)*15.5),34+Math.abs(i-2)**1.3*4.6-(hind?0:2)]);
+    if(p.web)s+=`<path d="M${toes[0][0]} ${toes[0][1]} L${toes[1][0]} ${toes[1][1]} L${toes[2][0]} ${toes[2][1]} L${toes[3][0]} ${toes[3][1]} L${toes[4][0]} ${toes[4][1]} L${X(80)} 70 L${X(20)} 70Z" opacity=".35"/>`;
+    s+=toes.map(([x,y],i)=>El(x,y,6*big,8.5*big,(i-2)*10)).join('');
+    s+=toes.map(([x,y],i)=>El(x+(i-2)*1.6,y-13*big-(p.big?3:0),1.6*big,(p.big?5:3)*big,(i-2)*10)).join('');
+    s+=`<path d="M${X(23)} 62 Q50 ${hind?50:54} ${X(77)} 62 Q${X(82)} 78 ${X(66)} 82 Q50 87 ${X(34)} 82 Q${X(18)} 78 ${X(23)} 62Z"/>`;
+    if(hind&&!p.small)s+=El(50,100,9*k,7,0,.55);
+    break}
+  case 'hare':{const L=p.long?1.12:1;
+    if(!hind){s+=El(50,64,17,20,0,.55)+[[36,40],[46,30],[56,30],[65,40]].map(([x,y])=>El(x,y,6.5,9)).join('')}
+    else{s+=[[34,30],[45,22],[56,22],[66,30]].map(([x,y],i)=>El(x,y,6,14*L,(i-1.5)*6)).join('')+El(50,74*L,17,32*L,0,.5)}
+    s=blur(s,2.4);break}
+  case 'bear':{
+    if(!hind){s+=`<rect x="14" y="56" width="72" height="30" rx="15"/>`+[[17,48],[32,36],[50,32],[68,36],[83,48]].map(([x,y],i)=>El(x,y,7.5,9,(i-2)*12)).join('')
+      +[[13,28],[29,15],[50,10],[71,15],[87,28]].map(([x,y],i)=>El(x,y,2.2,8,(i-2)*12)).join('')}
+    else{s+=`<path d="M28 44 Q50 36 72 44 Q78 80 66 108 Q50 116 34 108 Q22 80 28 44Z"/>`+[[24,34],[36,24],[50,21],[64,24],[76,34]].map(([x,y],i)=>El(x,y,6.5,8,(i-2)*12)).join('')
+      +[[22,20],[34,10],[50,7],[66,10],[78,20]].map(([x,y],i)=>El(x,y,1.8,5,(i-2)*12)).join('')}
+    break}
+  case 'vole':{const n=hind?5:4,c=[50,70];
+    s+=El(50,72,7,6);for(let i=0;i<n;i++){const a=(-150+i*(120/(n-1)))*Math.PI/180,L=hind?34:26;
+      const x=c[0]+Math.cos(a)*L,y=c[1]+Math.sin(a)*L;s+=`<line x1="${c[0]+Math.cos(a)*8}" y1="${c[1]+Math.sin(a)*8}" x2="${x}" y2="${y}" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>`+El(x,y,3.5,3.5)}
+    if(hind)s+=El(50,94,4,6,0,.6);break}
+  case 'muskrat':{
+    if(!hind){s+=El(50,72,9,8);[[-155],[-115],[-65],[-25]].forEach(([d])=>{const a=d*Math.PI/180;s+=`<line x1="50" y1="72" x2="${50+Math.cos(a)*28}" y2="${72+Math.sin(a)*28}" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>`})}
+    else{s+=El(50,82,11,22,0,.8);[[-160],[-125],[-92],[-58],[-22]].forEach(([d])=>{const a=d*Math.PI/180;s+=`<line x1="50" y1="70" x2="${50+Math.cos(a)*42}" y2="${70+Math.sin(a)*46}" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>`})}
+    break}
+  case 'porc':{const h=hind?1.15:1;
+    s+=El(50,66,24,34*h,0,.35);for(let y=40;y<=96*h;y+=8)for(let x=32;x<=68;x+=8){const dx=(x-50)/24,dy=(y-66)/(34*h);if(dx*dx+dy*dy<.85)s+=El(x+(y%16?4:0),y,2.6,2.6)}
+    s+=[0,1,2,3,...(hind?[4]:[])].map(i=>{const n=hind?5:4,x=50+(i-(n-1)/2)*11;return El(x,26-Math.abs(i-(n-1)/2)*2,2.4,7)}).join('');break}
+  case 'beaver':{
+    if(!hind){s+=El(50,70,14,13);[[-160],[-125],[-90],[-55],[-20]].forEach(([d])=>{const a=d*Math.PI/180;s+=`<line x1="50" y1="68" x2="${50+Math.cos(a)*30}" y2="${68+Math.sin(a)*30}" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>`})}
+    else{const T=[[12,30],[28,14],[50,8],[72,14],[88,30]];s+=`<path d="M${T.map(([x,y])=>`${x} ${y+6}`).join(' L')} L70 80 Q50 112 30 80Z" opacity=".38"/>`+El(50,86,16,26)+T.map(([x,y])=>`<line x1="50" y1="70" x2="${x}" y2="${y}" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>`).join('')}
+    break}
+  case 'hoof':{const k=p.k,f=hind?.92:1;
+    const half={caribou:`M47 18 C30 20 18 48 21 76 C23 92 34 99 45 95 C42 70 44 40 47 18Z`,
+      moose:`M48 8 C39 22 31 52 33 80 C34 95 41 101 48 97 C47 70 47 40 48 8Z`,
+      muskox:`M48 26 C29 26 21 50 23 76 C25 93 36 99 47 96 C46 72 47 48 48 26Z`}[k];
+    const g=`<g transform="translate(50 0) scale(${f} 1) translate(-50 0)">${mirror(`<path d="${half}"/>`)}</g>`;
+    s+=k==='caribou'?`<g transform="translate(0 0)">${g}</g>`+mirror(El(31,110,5,7))+'' :g;
+    if(k==='moose')s+=mirror(El(36,112,4,6,0,.35));break}
+  case 'bird':{const w=p.w,b=p.back,t=p.toe,cx=50,cy=72;
+    const ln=(x,y)=>`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="currentColor" stroke-width="${w}" stroke-linecap="round"/>`;
+    s+=ln(cx-t*.78,cy-t*1.08)+ln(cx,cy-t*1.3)+ln(cx+t*.78,cy-t*1.08)+(b?ln(cx,cy+b):'')+El(cx,cy,w*.9,w*.9);
+    s=blur(s,p.fur);break}
+  case 'web':{const W=p.wide?1.12:p.narrow?.92:1,X=x=>50+(x-50)*W;
+    s+=`<path d="M50 84 L${X(18)} 28 Q${X(34)} 40 50 20 Q${X(66)} 40 ${X(82)} 28 Z" opacity=".42"/>`
+      +[[X(18),28],[50,16],[X(82),28]].map(([x,y])=>`<line x1="50" y1="82" x2="${x}" y2="${y}" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>`).join('')+El(50,84,5,5);break}
+  case 'zygo':{const ln=(x,y)=>`<line x1="50" y1="62" x2="${x}" y2="${y}" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>`;
+    s+=blur(ln(36,20)+ln(62,18)+ln(28,98)+ln(70,96)+El(50,62,9,9),1.2)
+      +[[36,20],[62,18],[28,98],[70,96]].map(([x,y])=>El(x+(x<50?-2:2)*(y<50?1:1),y+(y<50?-7:7),1.8,4,0)).join('');break}
+  }
+  return `<svg viewBox="0 0 100 120" fill="currentColor" aria-hidden="true"><defs>${fdefs}</defs>${s}</svg>`;
+}
+const isBird=n=>['bird','web','zygo'].includes((TR[n]||{}).t);
+function trackPanel(name){
+  if(!TR[name])return '';
+  const pics=isBird(name)?[['Foot',trackArt(name,false)]]:[['Front',trackArt(name,false)],['Hind',trackArt(name,true)]];
+  return `<div class="card tracks">${pics.map(([l,svg])=>`<figure>${svg}<figcaption>${l}</figcaption></figure>`).join('')}
+    <p>Simplified drawing, not to scale. Real prints in snow are often blurrier.</p></div>`;
+}
+
+// ---------- trail patterns + measuring (offline) ----------
+const PATTERNS=[
+ {id:'walk',name:'Straight line',how:'Walking or trotting',what:'Each hind foot lands in or near its front print, so the trail is one neat line. An animal traveling steadily and saving energy.',who:['Red fox','Arctic fox','Wolf','Lynx','Caribou','Moose']},
+ {id:'wander',name:'Wandering',how:'Ambling with no plan',what:'Prints go every which way, with side trips and sniffing spots. Usually a dog near people\'s trails.',who:['Dog']},
+ {id:'bound',name:'Pairs side by side',how:'Bounding',what:'Front feet land, then the hind feet land in the same spots, leaving pairs. Gaps change as it speeds up or dives into the snow.',who:['Ermine (weasel)','Mink','River otter']},
+ {id:'hop',name:'Groups of 4',how:'Hopping',what:'Small front feet land first, then the big hind feet swing past and land ahead. The two big prints point the way it was going.',who:['Snowshoe hare','Alaska hare','Vole or lemming']},
+ {id:'lope',name:'Slanted groups of 3–4',how:'Loping',what:'Four prints in a slanted group, repeating. A relaxed run that covers long distances.',who:['Wolverine','River otter','Red fox']},
+ {id:'waddle',name:'Wide, waddling',how:'Waddling or pacing',what:'A wide trail with toes often turned in. Heavy or slow animals that rock from side to side.',who:['Brown bear','Porcupine','Beaver','Muskrat']},
+ {id:'bwalk',name:'Bird prints in a line',how:'Bird walking',what:'Prints one in front of the other. Ground birds that walk while they feed.',who:['Willow ptarmigan','Rock ptarmigan','Raven','Snow bunting','Gull']},
+ {id:'bhop',name:'Bird prints in pairs',how:'Bird hopping',what:'Prints side by side. Small perching birds that hop.',who:['Redpoll','Raven']}
+];
+function patSVG(id){
+  const o=(x,y,rx=5,ry=7,r=0)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"${r?` transform="rotate(${r} ${x} ${y})"`:''}/>`;
+  const bf=(x,y)=>`<g transform="translate(${x} ${y})" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"><path d="M0 5L-6-5M0 5V-8M0 5L6-5M0 5v4"/></g>`;
+  let s='';
+  if(id==='walk')for(let i=0;i<6;i++)s+=o(i%2?52:40,180-i*30);
+  if(id==='wander')[[30,184],[48,168],[36,148],[58,140],[44,118],[66,104],[50,86],[30,74],[42,52],[62,40],[48,22]].forEach(([x,y],i)=>s+=o(x,y,5,7,i*25-40));
+  if(id==='bound')for(let y of[176,118,60])s+=o(38,y,4,5)+o(52,y-4,4,5);
+  if(id==='hop')for(let y of[168,90]){s+=o(44,y+26,3.5,4.5)+o(46,y+12,3.5,4.5)+o(32,y-12,5,10)+o(58,y-12,5,10)}
+  if(id==='lope')for(let y of[168,92]){s+=o(34,y+24,4.5,6)+o(42,y+10,4.5,6)+o(50,y-2,4.5,6)+o(58,y-16,4.5,6)}
+  if(id==='waddle')for(let i=0;i<5;i++)s+=o(i%2?64:26,180-i*36,7,9,i%2?-18:18);
+  if(id==='bwalk')for(let i=0;i<6;i++)s+=bf(i%2?52:40,180-i*30);
+  if(id==='bhop')for(let y of[176,120,64])s+=bf(38,y)+bf(54,y-2);
+  return `<svg viewBox="0 0 90 210" fill="currentColor" aria-hidden="true"><path d="M78 196V14M72 22l6-10 6 10" stroke="currentColor" stroke-width="2" fill="none" opacity=".35"/>${s}</svg>`;
+}
+function patterns(){
+  view='patterns';
+  show(`<h2>Trail patterns</h2><p class="sub">Step back and look at how the prints are grouped. The pattern tells you the animal family before you look closely. Arrows show the direction of travel.</p>
+    <div class="log">${PATTERNS.map(p=>`<div class="card pat"><div class="pd">${patSVG(p.id)}</div><div><h3>${p.name}</h3><p class="how">${p.how}</p><p>${p.what}</p>
+      <div class="chips">${p.who.map(n=>`<button type="button" data-sp="${esc(n)}">${esc(n)}</button>`).join('')}</div></div></div>`).join('')}</div>
+    <p class="section">How to measure a track</p>
+    <div class="card facts">
+      <div class="fact"><span class="ic">${FI.size}</span><div><b>Length and width</b><p>Measure one clear print from the back of the heel pad to the tip of the front toe. Leave out the claw marks. Measure the widest point for width.</p></div></div>
+      <div class="fact"><span class="ic">${FI.doing}</span><div><b>Stride</b><p>From one print to the next print of the same foot. Longer strides mean a bigger or faster animal.</p></div></div>
+      <div class="fact"><span class="ic">${FI.also}</span><div><b>Trail width</b><p>From the outside edge of the left prints to the outside edge of the right prints. Wide trails mean a wide-bodied animal.</p></div></div>
+      <div class="fact"><span class="ic">${FI.next}</span><div><b>Soft snow</b><p>Prints in fresh soft snow look bigger than the foot. Measure the firmest, clearest print you can find.</p></div></div>
+    </div>
+    <div class="bar"><button class="btn alt" type="button" id="rul2">Open the ruler</button></div>
+    <div class="dock"><div class="bar"><button class="btn alt" type="button" id="home">Back</button></div></div>`);
+  app.querySelectorAll('[data-sp]').forEach(b=>b.addEventListener('click',()=>{const sp=SP.find(x=>x.n===b.dataset.sp);if(sp)detail(spInfo(sp),{guide:true,top:trackPanel(sp.n),back:patterns})}));
+  $('#rul2').addEventListener('click',ruler);$('#home').addEventListener('click',home);
+}
+
+// ---------- quiz (offline) ----------
+let Q=null;
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function newQuiz(){
+  const sp=shuffle(SP.filter(s=>TR[s.n])).slice(0,7);
+  const qs=sp.map(s=>{const others=shuffle(SP.filter(x=>x.n!==s.n&&TR[x.n]));
+    const near=others.filter(x=>x.k===s.k).slice(0,2),far=others.filter(x=>x.k!==s.k&&!near.includes(x)).slice(0,3-near.length);
+    return {kind:'track',sp:s,ans:s.n,opts:shuffle([s.n,...near.map(x=>x.n),...far.map(x=>x.n)])}});
+  shuffle(PATTERNS).slice(0,3).forEach(p=>{const others=shuffle(PATTERNS.filter(x=>x.id!==p.id)).slice(0,3);
+    qs.push({kind:'pattern',p,ans:p.how,opts:shuffle([p.how,...others.map(x=>x.how)])})});
+  Q={qs:shuffle(qs),i:0,score:0};
+}
+function quiz(start){
+  view='quiz';if(start||!Q)newQuiz();
+  if(Q.i>=Q.qs.length){const n=Q.qs.length,s=Q.score;
+    show(`<div class="empty" style="padding:20px 0 0">${IC.paw}</div><h2 style="text-align:center">${s} out of ${n}</h2>
+      <p class="sub" style="text-align:center">${s>=9?'Expert tracker. The trail has no secrets from you.':s>=6?'Nice work. A few more rounds and you\'ll be reading trails at a glance.':'Good start. Browse the field guide and trail patterns, then try again.'}</p>
+      <div class="tools"><button type="button" class="tool" id="g1"><span class="ic">${FI.book}</span><span><b>Field guide</b><small>Study the tracks</small></span></button>
+      <button type="button" class="tool" id="p1"><span class="ic">${FI.doing}</span><span><b>Trail patterns</b><small>Gaits and measuring</small></span></button></div>
+      <div class="dock"><div class="bar"><button class="btn alt" type="button" id="home">Done</button><button class="btn" type="button" id="again">Play again</button></div></div>`);
+    $('#g1').addEventListener('click',()=>guide());$('#p1').addEventListener('click',patterns);
+    $('#again').addEventListener('click',()=>quiz(true));$('#home').addEventListener('click',home);return}
+  const q=Q.qs[Q.i];
+  const pic=q.kind==='track'?`<div class="card qpic">${isBird(q.sp.n)?`<figure>${trackArt(q.sp.n,false)}<figcaption>Foot</figcaption></figure>`:`<figure>${trackArt(q.sp.n,false)}<figcaption>Front</figcaption></figure><figure>${trackArt(q.sp.n,true)}<figcaption>Hind</figcaption></figure>`}</div>
+      <p class="sub" style="margin:10px 0 0">Print about ${q.sp.sz[0]}–${q.sp.sz[1]} in (${Math.round(q.sp.sz[0]*2.54)}–${Math.round(q.sp.sz[1]*2.54)} cm)</p>`
+    :`<div class="card qpic pq">${patSVG(q.p.id)}</div>`;
+  show(`<div class="dots">${Q.qs.map((_,i)=>`<i class="${i<=Q.i?'on':''}"></i>`).join('')}</div>
+    <h2>${q.kind==='track'?'Whose tracks are these?':'What is this animal doing?'}</h2>${pic}
+    <div class="opts">${q.opts.map(o=>`<button type="button" class="opt" data-o="${esc(o)}">${esc(o)}</button>`).join('')}</div>
+    <div id="fb" aria-live="polite"></div>
+    <div class="dock"><div class="bar"><button class="btn alt" type="button" id="quit">Quit</button><button class="btn" type="button" id="nx" disabled>Next</button></div></div>`);
+  app.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+    if(app.querySelector('.opt.right'))return;
+    const ok=b.dataset.o===q.ans;if(ok)Q.score++;
+    app.querySelectorAll('.opt').forEach(x=>{if(x.dataset.o===q.ans)x.classList.add('right');else if(x===b)x.classList.add('wrong');x.disabled=true});
+    $('#fb').innerHTML=`<div class="card fbk ${ok?'ok':''}"><b>${ok?'Correct!':'Not quite. It\'s '+esc(q.ans)+'.'}</b><p>${esc(q.kind==='track'?q.sp.tip:q.p.what)}</p></div>`;
+    $('#fb').scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});const nx=$('#nx');nx.disabled=false;nx.textContent=Q.i===Q.qs.length-1?'See my score':'Next';nx.focus();
+  }));
+  $('#nx').addEventListener('click',()=>{Q.i++;quiz()});$('#quit').addEventListener('click',()=>{Q=null;home()});
 }
 
 // ---------- log ----------
