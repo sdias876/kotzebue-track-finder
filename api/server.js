@@ -123,4 +123,10 @@ http.createServer((req, res) => {
     try { const out = await identify(body); console.log('identify: ok in', Date.now() - t0, 'ms ->', out.name); send(res, 200, out); }
     catch (e) { console.error('identify: failed in', Date.now() - t0, 'ms:', e.name, e.message); send(res, 502, { error: 'failed' }); }
   });
-}).listen(PORT, () => console.log('Track Finder photo server on port', PORT));
+}).listen(PORT, () => {
+  console.log('Track Finder photo server on port', PORT);
+  if (GKEY) fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': GKEY } })
+    .then(r => r.json())
+    .then(d => console.log('gemini models:', (d.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => m.name.replace('models/', '')).join(', ') || JSON.stringify(d).slice(0, 300)))
+    .catch(e => console.error('gemini models: failed', e.message));
+});
