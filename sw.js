@@ -1,5 +1,5 @@
 // Offline support: keep the app and its fonts on the phone.
-const CACHE = 'tracks-v1';
+const CACHE = 'tracks-v3';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -18,6 +18,23 @@ self.addEventListener('activate', e => {
 // and quietly fetch an update in the background for next time.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  // Never cache the photo server.
+  if (url.hostname.includes('track-finder-api')) return;
+  // The page itself: get the newest version if signal answers within 3 seconds, else use the saved copy.
+  if (e.request.mode === 'navigate') {
+    e.respondWith((async () => {
+      const saved = await caches.match('index.html');
+      const net = fetch(e.request).then(res => {
+        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put('index.html', copy)); }
+        return res;
+      });
+      if (!saved) return net;
+      const timeout = new Promise(r => setTimeout(() => r(saved), 3000));
+      return Promise.race([net.catch(() => saved), timeout]);
+    })());
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(saved => {
       const update = fetch(e.request)

@@ -1,0 +1,9 @@
+{
+  "name": "kotzebue-track-finder-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Photo identification server for the Kotzebue Track Finder app",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}
